@@ -14,20 +14,20 @@ Created on Thu Mar 31 19:26:54 2022
 @author: jeremy
 """
 
-import h5py
+import h5py as h5py
 import mne
 import numpy as np
 import pandas as pd
 from os.path import join as pjoin
 from itertools import product
-
+import saving as sav
 import matplotlib.pyplot as plt
 from scipy import stats
 from matplotlib import colors
 #import Utils_FC.py as ufc
 import os
 import pickle
-
+import Utils_FC as fc
 import warnings 
 warnings.simplefilter('ignore')
 
@@ -74,103 +74,6 @@ for ch in total_channels_set:
         ch_H.add(ch)
 print(ch_H)
 
-
-
-
-def go_edge_list(tseries, edge_list):
-    
-    matrix_E=[]
-    for edge in edge_list:
-        i,j = edge
-        E=np.multiply((tseries[i], tseries[j]))
-        matrix_E.append(E)
-        
-    matrix_E=np.array(matrix_E)
-
-    return(matrix_E)
-
-
-def go_edge(tseries):
-    nregions=tseries.shape[1]
-    Blen=tseries.shape[0]
-    nedges=int(nregions**2/2-nregions/2)
-    iTriup= np.triu_indices(nregions,k=1) 
-    gz=stats.zscore(tseries)
-    Eseries = gz[:,iTriup[0]]*gz[:,iTriup[1]]
-    return Eseries
-
-def clean2(x1, N=3):
-    #x1 is an matrix, channels*time
-    #N is an input that how many times the variance is considered an artifacts.
-    
-    #We copy the data to not modify the original raw
-    x=x1.copy()
-    
-    absx=np.absolute(x)
-    
-    #mean and standard deviation of the absolute values in the raw data
-    s=np.std(absx)
-    m=np.mean(absx)
-    
-    #where the distance betwenn the absolute value of the activity is the mean absolute values of 
-    #activities is bigger than N*std, we substitute with a nan value
-    x[absx-m>N*s]=np.nan
-    
-    #We do the mean again without consider the nan values
-    m=np.nanmean(x)
-    
-    #Here we have the list of indeces of the nan values
-    a=np.argwhere(np.isnan(x)==True)
-    
-    for indeces in a:
-        
-        k,j = indeces
-        
-        #in case the nan correspond to the first measurement we substitute with the mean
-        if j==0:
-            x[k,j]=m
-        
-        #in case not, we substitute with the value measured at the previous instant of time in the same channel
-        else:
-            x[k,j]=x[k,j-1]
-    return x
-
-def clean1(x1, N=5):
-    #x1 is an matrix, channels*time
-    #N is an input that how many times the variance is considered an artifacts.
-    
-    #We copy the data to not modify the original raw
-    x=x1.copy()
-    
-    #mean and standard deviation of the raw
-    s=np.std(x)
-    m=np.mean(x)
-
-    #where the distance betwenn the data and the mean is bigger than N*std, we substitute with a nan value
-    x[np.abs(x-m)>N*s]=np.nan
-    
-    #We do the mean again without consider the nan value
-    m=np.nanmean(x)
-    
-    #Here we have the list of indeces of the nan values
-    a=np.argwhere(np.isnan(x)==True)
-    
-    
-    for indeces in a:
-        
-        k,j = indeces
-        
-        #in case the nan correspond to the first measurement we substitute with the mean
-        if j==0:
-            x[k,j]=m
-        
-        #in case not, we substitute with the value measured at the previous instant of time in the same channel
-        else:
-            x[k,j]=x[k,j-1]
-            
-    return x
-    
-
 #length of the interval to analyse in one step 
 
 edge_music={}
@@ -183,6 +86,11 @@ data_music={}
 data_speech={}
 data_rest={}
 
+t=30000
+
+sum_act_speech=[]
+sum_act_music=[]
+sum_act_rest=[]
 
 for isub, subject in enumerate(subject_list):
 ## Load the data from the HDF fil
@@ -233,13 +141,13 @@ for isub, subject in enumerate(subject_list):
     with h5py.File(pjoin('speech_stimulus.hdf5'), 'r') as f:
         print(f.keys())
         speech_stimulus=f['speech']['matlab']['speech_matlab_env'][...]
-        plt.plot(speech_stimulus)
+        #plt.plot(speech_stimulus)
         print('the length of the speech stimulus is', len(speech_stimulus))
     
     with h5py.File(pjoin('music_stimulus.hdf5'), 'r') as f:
         print(f.keys())
         music_stimulus=f['music']['matlab']['music_matlab_env'][...]
-        plt.plot(music_stimulus)
+        #plt.plot(music_stimulus)
         print('the length of the music stimulus is', len(speech_stimulus))
 
 ## Cleaning from artifacts
@@ -253,31 +161,79 @@ for isub, subject in enumerate(subject_list):
 
 #selecting only the channels we want, in this script H
     ch_H_i= [i for i, ch in enumerate(clean_chnames) if ch not in ch_H]
+    ch_wH_i= [i for i, ch in enumerate(clean_chnames) if ch in ch_H]
     final_channels=[ch for i, ch in enumerate(clean_chnames) if i not in ch_H_i]
     print(final_channels)
+    
     clean_music_H = np.delete(clean_music, ch_H_i, axis=0)
     clean_speech_H = np.delete(clean_speech, ch_H_i, axis=0)
     clean_rest_H = np.delete(clean_rest, ch_H_i, axis=0)
     
-    clean_music_without_H = np.delete(clean_music, ch_H_i, axis=0)
-    clean_speech_without_H = np.delete(clean_speech, ch_H_i, axis=0)
-    clean_rest_without_H = np.delete(clean_rest, ch_H_i, axis=0)
+    clean_music_without_H = np.delete(clean_music, ch_wH_i, axis=0)
+    clean_speech_without_H = np.delete(clean_speech, ch_wH_i, axis=0)
+    clean_rest_without_H = np.delete(clean_rest, ch_wH_i, axis=0)
     
-    #clean_mu=clean2(clean_music_H, N=3)
-    #clean_sp=clean2(clean_speech_H, N=3)
-    #clean_re=clean2(clean_rest_H, N=3)
+    zdata_speech_art=stats.zscore(clean_speech, axis=1)
+    zdata_music_art=stats.zscore(clean_music, axis=1)
+    zdata_rest_art=stats.zscore(clean_rest, axis=1)
     
-    zdata_speech=stats.zscore(clean_speech)
-    zdata_music=stats.zscore(clean_music)
-    zdata_rest=stats.zscore(clean_rest)
+    #CLEANING PROCESS
+    
+    N=7
+    
+    std_speech=np.std(zdata_speech_art)
+    std_music=np.std(zdata_music_art)
+    std_rest=np.std(zdata_rest_art)
+    
+    art_list_speech=[i for sub in zdata_speech_art for i in sub]
+    
+    art_list_music=[i for sub in zdata_music_art for i in sub]
+    
+    art_list_rest=[i for sub in zdata_rest_art for i in sub]
+    
+    if isub==1 or isub==10:
+        plt.hist(art_list_speech, 100)
+        plt.axvline(std_speech*N, label='std*'+str(std_speech))
+        plt.axvline(-std_speech*N, label='std*'+str(std_speech))
+        plt.title('zscore activities speech distribution')
+        plt.legend()
+        plt.show()
+        plt.close()
+        plt.hist(art_list_music, 100)
+        plt.axvline(std_music*N, label='std*'+str(std_music))
+        plt.axvline(-std_music*N, label='std*'+str(std_music))
+        plt.title('zscore activities music distribution')
+        plt.legend()
+        plt.show()
+        plt.close()
+        plt.hist(art_list_rest, 100)
+        plt.axvline(std_rest*N, label='std*'+str(std_rest))
+        plt.axvline(-std_rest*N, label='std*'+str(std_rest))
+        plt.title('zscore activities rest distribution')
+        plt.legend()
+        plt.show()
+        plt.close()
+    
+    
+    
+    print('In speech the number of values' + str(N) + 'away from the mean is ' + str(len(np.where(zdata_speech_art > N*std_speech)[0])/(len(zdata_speech_art)*len(zdata_speech_art[0,:]))))
+    print('In music the number of values' + str(N) + 'away from the mean is ' + str(len(np.where(zdata_speech_art > N*std_speech)[0])/(len(zdata_speech_art)*len(zdata_speech_art[0,:]))))
+    print('In rest the number of values' + str(N) + 'away from the mean is ' + str(len(np.where(zdata_speech_art > N*std_speech)[0])/(len(zdata_speech_art)*len(zdata_speech_art[0,:]))))
+    
+    zdata_music=fc.clean(zdata_music_art, N=6)
+    zdata_speech=fc.clean(zdata_speech_art, N=6)
+    zdata_rest=fc.clean(zdata_rest_art, N=6)
+    
+    """
+    sum_act_speech.append(np.sqrt(np.sum(zdata_speech**2, axis=0)))
+    sum_act_music.append(np.sqrt(np.sum(zdata_music**2, axis=0)))
+    sum_act_rest.append(np.sqrt(np.sum(zdata_rest**2, axis=0)))"""
     
     zdata_speech_stimulus=stats.zscore(speech_stimulus)
     zdata_music_stimulus=stats.zscore(music_stimulus)
     
     zdata_speech_purified=zdata_speech[:,:len(zdata_speech_stimulus)]-zdata_speech_stimulus[:len(zdata_speech)]
     zdata_music_purified=zdata_music[:,:len(zdata_music_stimulus)]-zdata_music_stimulus[:len(zdata_music)]
-    
-    #SPEECH
     
     t_tot=len(zdata_speech[1,:])
     num=int(t_tot/t)
@@ -288,10 +244,12 @@ for isub, subject in enumerate(subject_list):
     if t_list[-1]!=t_tot:
         t_list.append(t_tot)
     print(t_list)
+        #SPEECH
     
+
     for j in range(len(t_list)-1):
         
-        x=zdata_speech_purified[:,t_list[j]:t_list[j+1]]
+        x=zdata_speech[:,t_list[j]:t_list[j+1]]
         #x=np.where(abs(x)>5, abs(x)*5/x, x)
         
         print('Done interval', j)
@@ -299,10 +257,10 @@ for isub, subject in enumerate(subject_list):
         #edge_speech=go_edge_list(x)
         
         x=x.T
-        edge_speech=go_edge(x)
+        edge_speech=fc.go_edge(x)
         
-        plt.figure(figsize=(12,8))
-        plt.imshow(edge_speech.T[:,:10000], aspect='auto', vmin=-1, vmax=1)
+        plt.figure(figsize=(15,13))
+        plt.imshow(edge_speech.T[:,:10000], aspect='auto', vmin=-0.5, vmax=0.5)
         plt.colorbar()
         plt.tight_layout()
         plt.show()
@@ -313,7 +271,14 @@ for isub, subject in enumerate(subject_list):
             rss_speech[subject]=np.concatenate((rss_speech[subject],np.sqrt(np.sum(edge_speech**2, axis=1))))
         else:
             rss_speech[subject]=np.sqrt(np.sum(edge_speech**2, axis=1))
-            
+        
+        plt.figure(figsize=(12,5))        
+        plt.plot(rss_speech[subject][t_list[j]:t_list[j]+10000])
+        plt.show()
+        plt.close()
+    
+   
+    
     #MUSIC
     
     t_tot=len(zdata_music[1,:])
@@ -330,7 +295,7 @@ for isub, subject in enumerate(subject_list):
         x=zdata_music_purified[:,t_list[j]:t_list[j+1]].T
         #x=np.where(abs(x)>5, abs(x)*5/x, x)
     
-        edge_music=go_edge(x)
+        edge_music=fc.go_edge(x)
         if subject in rss_music:
             rss_music[subject]=np.concatenate((rss_music[subject],np.sqrt(np.sum(edge_music**2, axis=1))))
         else:
@@ -351,7 +316,7 @@ for isub, subject in enumerate(subject_list):
         x=zdata_rest[:,t_list[j]:t_list[j+1]].T
         #x=np.where(abs(x)>5, abs(x)*5/x, x)
     
-        edge_rest=go_edge(x)
+        edge_rest=fc.go_edge(x)
         if subject in rss_rest:
             rss_rest[subject]=np.concatenate((rss_rest[subject],np.sqrt(np.sum(edge_rest**2, axis=1))))
         else:
@@ -395,7 +360,7 @@ for subject in subject_list:
 rss_array_speech=np.array(rss_list_speech)
 z_rss_array_speech=np.array(z_rss_list_speech)
 
-plt.figure(figsize=(18,8))
+plt.figure(figsize=(12,8))
 plt.imshow(rss_array_speech, aspect='auto')
 plt.colorbar()
 plt.tight_layout()
@@ -414,7 +379,7 @@ rss_array_music=np.array(rss_list_music)
 z_rss_array_music=np.array(z_rss_list_music)
 
     
-plt.figure(figsize=(18,8))
+plt.figure(figsize=(12,8))
 plt.imshow(rss_array_music, aspect='auto')
 plt.colorbar()
 plt.tight_layout()
@@ -432,7 +397,7 @@ for subject in subject_list:
 rss_array_rest=np.array(rss_list_rest)
 z_rss_array_rest=np.array(z_rss_list_rest)
 
-plt.figure(figsize=(18,8))
+plt.figure(figsize=(12,8))
 plt.imshow(rss_array_rest, aspect='auto')
 plt.colorbar()
 plt.tight_layout()
@@ -440,7 +405,8 @@ plt.title('rest')
 plt.show()
 plt.close()
 
-plt.figure(figsize=(18,8))
+sav.save_obj(np.corrcoef(rss_array_speech) , 'corr_matrix_allsubs_speech') 
+plt.figure(figsize=(12,8))
 plt.imshow(np.corrcoef(rss_array_speech), aspect='auto')
 plt.colorbar()
 plt.tight_layout()
@@ -451,10 +417,12 @@ plt.show()
 plt.close()
 
 print('The mean correlation during speech listening is', np.mean(np.corrcoef(rss_array_speech)[np.triu_indices(19, k = 1)]))
-print('The number of value of correlation > 0.15 is', len(np.argwhere(np.corrcoef(rss_array_speech)[np.triu_indices(19, k = 1)]>0.15)))
-print('The number of values of correlation > 0.2 is', len(np.argwhere(np.corrcoef(rss_array_speech)[np.triu_indices(19, k = 1)]>0.2)))
-    
-plt.figure(figsize=(18,8))
+print('The result of the correlation is this number of standard daviation away from the mean of the distribution',np.mean(np.corrcoef(rss_array_speech)[np.triu_indices(19, k = 1)])/np.std(list_mean_corr_speech))
+print('The number of value of correlation > 0.01is', len(np.argwhere(np.corrcoef(rss_array_speech)[np.triu_indices(19, k = 1)]>0.01)))
+print('The number of values of correlation > 0.02 is', len(np.argwhere(np.corrcoef(rss_array_speech)[np.triu_indices(19, k = 1)]>0.02)))
+
+sav.save_obj(np.corrcoef(rss_array_music) , 'corr_matrix_allsubs_music')     
+plt.figure(figsize=(12,8))
 plt.imshow(np.corrcoef(rss_array_music), aspect='auto',)
 plt.colorbar()
 plt.tight_layout()
@@ -465,7 +433,8 @@ plt.show()
 plt.close()
 print('The mean correlation during music listening is', np.mean(np.corrcoef(rss_array_music)[np.triu_indices(19, k = 1)]))
 
-plt.figure(figsize=(18,8))
+sav.save_obj(np.corrcoef(rss_array_rest) , 'corr_matrix_allsubs_rest') 
+plt.figure(figsize=(12,8))
 plt.imshow(np.corrcoef(rss_array_rest), aspect='auto')
 plt.colorbar()
 plt.tight_layout()
@@ -476,7 +445,45 @@ plt.show()
 plt.close()
 print('The mean correlation in resting state is', np.mean(np.corrcoef(rss_array_rest)[np.triu_indices(19, k = 1)]))
 
-#TESTING WITH RANDOMIZATION
+#correlation studying activities
+"""
+plt.figure(figsize=(12,8))
+plt.imshow(np.corrcoef(np.array(sum_act_speech)), aspect='auto')
+plt.colorbar()
+plt.tight_layout()
+plt.title('corr matrix, speech')
+plt.xlabel('subjects')
+plt.ylabel('subjects')
+plt.show()
+plt.close()
+
+print('The mean correlation during speech listening is', np.mean(np.corrcoef(np.array(sum_act_speech))[np.triu_indices(19, k = 1)]))
+print('The number of value of correlation > 0.15 is', len(np.argwhere(np.corrcoef(np.array(sum_act_speech))[np.triu_indices(19, k = 1)]>0.15)))
+print('The number of values of correlation > 0.2 is', len(np.argwhere(np.corrcoef(np.array(sum_act_speech))[np.triu_indices(19, k = 1)]>0.2)))
+    
+plt.figure(figsize=(12,8))
+plt.imshow(np.corrcoef(np.array(sum_act_music)), aspect='auto',)
+plt.colorbar()
+plt.tight_layout()
+plt.title('corr matrix, music')
+plt.xlabel('subjects')
+plt.ylabel('subjects')
+plt.show()
+plt.close()
+print('The mean correlation during music listening is', np.mean(np.corrcoef(np.array(sum_act_music))[np.triu_indices(19, k = 1)]))
+
+plt.figure(figsize=(12,8))
+plt.imshow(np.corrcoef(np.array(sum_act_rest)), aspect='auto')
+plt.colorbar()
+plt.tight_layout()
+plt.title('corr matrix, rest')
+plt.xlabel('subjects')
+plt.ylabel('subjects')
+plt.show()
+plt.close()
+print('The mean correlation in resting state is', np.mean(np.corrcoef(np.array(sum_act_rest))[np.triu_indices(19, k = 1)]))
+"""
+
 
 def shifting(x, n=None):
     
@@ -500,22 +507,6 @@ def shifting_matrix(A, n_list=None):
             A_new[i,:]=shifting(A[i,:], n=n_list[i])
     
     return A_new
-
-rss_array_music_shift=shifting_matrix(rss_array_music)
-rss_array_speech_shift=shifting_matrix(rss_array_speech)
-
-plt.figure(figsize=(12,8))
-plt.imshow(np.corrcoef(rss_array_music_shift), aspect='auto')
-plt.colorbar()
-plt.show()
-plt.close()
-print('the mean correlation after RSS shifting during music listening is', np.mean(np.corrcoef(rss_array_music_shift)))
-plt.figure(figsize=(12,8))
-plt.imshow(np.corrcoef(rss_array_speech_shift), aspect='auto')
-plt.colorbar()
-plt.show()
-plt.close()
-print('the mean correlation after RSS shifting during speech listening is', np.mean(np.corrcoef(rss_array_speech_shift)))        
 
 number_sim=1000
 
@@ -557,6 +548,9 @@ plt.show()
 plt.close()
 
 
+
+    
+    
     
     
     
