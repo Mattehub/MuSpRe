@@ -50,6 +50,22 @@ def go_edge(tseries):
     Eseries = gz[:,iTriup[0]]*gz[:,iTriup[1]]
     return Eseries
 
+
+
+def go_edge_list(tseries, edge_list):
+    
+    matrix_E=[]
+    for edge in edge_list:
+        i,j = edge
+        E=np.multiply((tseries[i], tseries[j]))
+        matrix_E.append(E)
+        
+    matrix_E=np.array(matrix_E)
+
+    return(matrix_E)
+
+
+
 def intervals(a):
     # Create an array of how long are all the intervals (zero sequences).
     iszero = np.concatenate(([0], np.equal(a, 0).view(np.int8), [0]))
@@ -123,11 +139,85 @@ def clean(x1, N=3):
     
     x=x1.copy()
     s=np.std(x)
-    for i in range(len(x)-1):
-        if x[i+1]-x[i]>N*s:
-            x[i+1]=x[i]
+    x[x>N*s+np.mean(x)]=N*s+np.mean(x)
+    x[x<-N*s+np.mean(x)]=-N*s+np.mean(x)
             
     return x
 
-   
+
+
+
+def clean2(x1, N=3):
+    #x1 is an matrix, channels*time
+    #N is an input that how many times the variance is considered an artifacts.
+    
+    #We copy the data to not modify the original raw
+    x=x1.copy()
+    
+    absx=np.absolute(x)
+    
+    #mean and standard deviation of the absolute values in the raw data
+    s=np.std(absx)
+    m=np.mean(absx)
+    
+    #where the distance betwenn the absolute value of the activity is the mean absolute values of 
+    #activities is bigger than N*std, we substitute with a nan value
+    x[absx-m>N*s]=np.nan
+    
+    #We do the mean again without consider the nan values
+    m=np.nanmean(x)
+    
+    #Here we have the list of indeces of the nan values
+    a=np.argwhere(np.isnan(x)==True)
+    
+    for indeces in a:
+        
+        k,j = indeces
+        
+        #in case the nan correspond to the first measurement we substitute with the mean
+        if j==0:
+            x[k,j]=m
+        
+        #in case not, we substitute with the value measured at the previous instant of time in the same channel
+        else:
+            x[k,j]=x[k,j-1]
+    return x
+
+def clean1(x1, N=5):
+    #x1 is an matrix, channels*time
+    #N is an input that how many times the variance is considered an artifacts.
+    
+    #We copy the data to not modify the original raw
+    x=x1.copy()
+    
+    #mean and standard deviation of the raw
+    s=np.std(x)
+    m=np.mean(x)
+
+    #where the distance betwenn the data and the mean is bigger than N*std, we substitute with a nan value
+    x[np.abs(x-m)>N*s]=np.nan
+    
+    #We do the mean again without consider the nan value
+    m=np.nanmean(x)
+    
+    #Here we have the list of indeces of the nan values
+    a=np.argwhere(np.isnan(x)==True)
+    
+    
+    for indeces in a:
+        
+        k,j = indeces
+        
+        #in case the nan correspond to the first measurement we substitute with the mean
+        if j==0:
+            x[k,j]=m
+        
+        #in case not, we substitute with the value measured at the previous instant of time in the same channel
+        else:
+            x[k,j]=x[k,j-1]
+            
+    return x
+    
+
+
     

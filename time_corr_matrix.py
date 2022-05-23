@@ -178,7 +178,7 @@ for isub, subject in enumerate(subject_list):
     print(subject, isub)
     
     #MUSIC
-    with h5py.File(pjoin('seeg_data_h_env_down_h5py/', subject + '_down_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin('seeg_hgenv_down_down_h5py/', subject + '_hgenv_down_down_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('music', f['music'].shape)
 
@@ -186,7 +186,7 @@ for isub, subject in enumerate(subject_list):
         data_m=f['music'][...]
     
     #SPEECH
-    with h5py.File(pjoin('seeg_data_h_env_down_h5py/', subject + '_down_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin('seeg_hgenv_down_down_h5py/', subject + '_hgenv_down_down_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('speech', f['speech'].shape)
         print('speech', f['speech'].shape)
@@ -194,7 +194,7 @@ for isub, subject in enumerate(subject_list):
         data_s=f['speech'][...]
 
     #REST
-    with h5py.File(pjoin('seeg_data_h_env_down_h5py/', subject + '_down_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin('seeg_hgenv_down_down_h5py/', subject + '_hgenv_down_down_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('rest', f['rest'].shape)
         print('rest', f['rest'].shape)
@@ -245,15 +245,15 @@ for isub, subject in enumerate(subject_list):
     #clean_sp=clean2(clean_speech_H, N=3)
     #clean_re=clean2(clean_rest_H, N=3)
     
-    zdata_speech=stats.zscore(clean_speech)
-    zdata_music=stats.zscore(clean_music)
-    zdata_rest=stats.zscore(clean_rest)
+    zdata_speech=stats.zscore(clean_speech, axis=1)
+    zdata_music=stats.zscore(clean_music, axis=1)
+    zdata_rest=stats.zscore(clean_rest, axis=1)
 
     
     #SPEECH
     
     #t_tot=len(zdata_speech[1,:])
-    x=zdata_speech[:,:20000]
+    x=zdata_speech
     x=x.T
     edge=go_edge(x)
     '''for i in [1,30,100, 300,500,1000,1400,4000,5000]:
@@ -301,7 +301,7 @@ for isub, subject in enumerate(subject_list):
     
     #MUSIC
     
-    x=zdata_music[:,:20000]
+    x=zdata_music
     x=x.T
     edge=go_edge(x)
     """
@@ -332,7 +332,7 @@ for isub, subject in enumerate(subject_list):
     plt.close()
     #REST
     
-    x=zdata_rest[:,:20000]
+    x=zdata_rest
     x=x.T
     edge=go_edge(x)
     """

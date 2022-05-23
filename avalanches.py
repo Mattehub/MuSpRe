@@ -217,7 +217,7 @@ for isub, subject in enumerate(subject_list):
     fc_dict[subject]={}
     
     #MUSIC
-    with h5py.File(pjoin('seeg_data_h_env_down_down_h5py/', subject + '_down_down_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin('seeg_data_h_env_down_h5py/', subject + '_down_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('music', f['music'].shape)
 
@@ -225,14 +225,14 @@ for isub, subject in enumerate(subject_list):
         data_m=f['music'][...]
     
     #SPEECH
-    with h5py.File(pjoin('seeg_data_h_env_down_down_h5py/', subject + '_down_down_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin('seeg_data_h_env_down_h5py/', subject + '_down_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('speech', f['speech'].shape)
         #data_speech[subject]= f['speech'][...]
         data_s=f['speech'][...]
 
     #REST
-    with h5py.File(pjoin('seeg_data_h_env_down_down_h5py/', subject + '_down_down_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin('seeg_data_h_env_down_h5py/', subject + '_down_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('rest', f['rest'].shape)
 
