@@ -227,13 +227,13 @@ def clean(x1, N=3):
     
     x=x1.copy()
     s=np.std(x)
-<<<<<<< HEAD
-    x[x>N*s+np.mean(x)]=N*s+np.mean(x)
-    x[x<-N*s+np.mean(x)]=-N*s+np.mean(x)
-=======
+
+    #x[x>N*s+np.mean(x)]=N*s+np.mean(x)
+    #x[x<-N*s+np.mean(x)]=-N*s+np.mean(x)
+
     x[x>N*s]=N*s
     x[x<-N*s]=-N*s
->>>>>>> a2420c9950226a425412fadd94aaef0c87582e7b
+
             
     return x
 

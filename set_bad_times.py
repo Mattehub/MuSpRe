@@ -35,9 +35,9 @@ warnings.simplefilter('ignore')
 
 
 
-arr_mu = os.listdir('seeg_fif_data/music')
-arr_rest = os.listdir('seeg_fif_data/speech')
-arr_speech = os.listdir('seeg_fif_data/rest')
+arr_mu = os.listdir('/home/jeremy/anaconda3/matteo/seeg_fif_data/music')
+arr_rest = os.listdir('/home/jeremy/anaconda3/matteo/seeg_fif_data/speech')
+arr_speech = os.listdir('/home/jeremy/anaconda3/matteo/seeg_fif_data/rest')
 
 subject_set_mu=set()
 subject_set_speech=set()
@@ -60,7 +60,7 @@ subject_list=list(subject_set_mu.intersection(subject_set_speech,subject_set_res
 total_channels_set=set()
 
 for subject in subject_list:
-    with h5py.File(pjoin('seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
+    with h5py.File(pjoin('/home/jeremy/anaconda3/matteo/seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
         print(f.keys())
         print('chnames', f['chnames'].shape)
         
@@ -91,14 +91,14 @@ art_speech_times={}
 art_music_times={}
 art_rest_times={}
 
-N=7
+N=6
 t=30000
 for isub, subject in enumerate(subject_list):
 ## Load the data from the HDF fil
     print(subject, isub)
     
     #MUSIC
-    with h5py.File(pjoin('seeg_hgenv_down_down_h5py/', subject + '_hgenv_down_down_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin('/home/jeremy/anaconda3/matteo/seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('music', f['music'].shape)
 
@@ -106,7 +106,7 @@ for isub, subject in enumerate(subject_list):
         data_m=f['music'][...]
     
     #SPEECH
-    with h5py.File(pjoin('seeg_hgenv_down_down_h5py/', subject + '_hgenv_down_down_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin('/home/jeremy/anaconda3/matteo/seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('speech', f['speech'].shape)
         print('speech', f['speech'].shape)
@@ -114,7 +114,7 @@ for isub, subject in enumerate(subject_list):
         data_s=f['speech'][...]
 
     #REST
-    with h5py.File(pjoin('seeg_hgenv_down_down_h5py/', subject + '_hgenv_down_down_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin('/home/jeremy/anaconda3/matteo/seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('rest', f['rest'].shape)
         print('rest', f['rest'].shape)
@@ -125,13 +125,13 @@ for isub, subject in enumerate(subject_list):
 # redefine path
 # below example of loading of music data.
 
-    with h5py.File(pjoin('seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
+    with h5py.File(pjoin('/home/jeremy/anaconda3/matteo/seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
         print(f.keys())
         print('chnames', f['chnames'].shape)
     
         chnames = f['chnames'][...].astype('U')
 
-    with h5py.File(pjoin('seeg_data_h5py/h5_misc/', subject + '_misc.hdf5'), 'r') as f:
+    with h5py.File(pjoin('/home/jeremy/anaconda3/matteo/seeg_data_h5py/h5_misc/', subject + '_misc.hdf5'), 'r') as f:
         print(f.keys())
         print('outlier_chans', f['outlier_chans']['strict_bads_names'])
 
@@ -139,13 +139,13 @@ for isub, subject in enumerate(subject_list):
         mu_bad_epo = f['outlier_epochs']['music']['strict_bads_epochs'][...]
         sp_bad_epo = f['outlier_epochs']['speech']['strict_bads_epochs'][...]
     
-    """with h5py.File(pjoin('speech_stimulus.hdf5'), 'r') as f:
+    """with h5py.File(pjoin('/home/jeremy/anaconda3/matteo/speech_stimulus.hdf5'), 'r') as f:
         print(f.keys())
         speech_stimulus=f['speech']['matlab']['speech_matlab_env'][...]
         plt.plot(speech_stimulus)
         print('the length of the speech stimulus is', len(speech_stimulus))
     
-    with h5py.File(pjoin('music_stimulus.hdf5'), 'r') as f:
+    with h5py.File(pjoin('/home/jeremy/anaconda3/matteo/music_stimulus.hdf5'), 'r') as f:
         print(f.keys())
         music_stimulus=f['music']['matlab']['music_matlab_env'][...]
         plt.plot(music_stimulus)
@@ -200,9 +200,9 @@ good_times_speech[list(set_speech)]=1
 good_times_music[list(set_music)]=1
 good_times_rest[list(set_rest)]=1
 
-sav.saving(set_speech, "set_speech_bad_times_100hz")
-sav.saving(set_music, "set_music_bad_times_100hz")
-sav.saving(set_rest, "set_rest_bad_times_100hz")
+sav.save_obj(set_speech, "/home/jeremy/anaconda3/matteo/set_speech_bad_times_100hz")
+sav.save_obj(set_music, "/home/jeremy/anaconda3/matteo/set_music_bad_times_100hz")
+sav.save_obj(set_rest, "/home/jeremy/anaconda3/matteo/set_rest_bad_times_100hz")
 
 plt.plot(good_times_speech)
 plt.show()
@@ -214,8 +214,8 @@ plt.close()
 plt.plot(good_times_rest)
 plt.show()
 plt.close()
-  
-    
+
+
     
     
     
