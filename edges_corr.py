@@ -1,11 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr 13 15:33:17 2022
+Created on Mon May  9 12:01:46 2022
 
 @author: jeremy
 """
 
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Apr  8 17:49:55 2022
+
+@author: jeremy
+"""
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Mar 31 19:26:54 2022
+
+@author: jeremy
+"""
 
 import h5py
 import mne
@@ -164,25 +179,26 @@ def clean1(x1, N=5):
     return x
     
 
+#length of the interval to analyse in one step 
+t=30000
+t_tot=50000
+edge_music={}
+edge_speech={}
+edge_rest={}
+rss_music={}
+rss_speech={}
+rss_rest={}
+data_music={}
+data_speech={}
+data_rest={}
 
-subject_list=subject_list
-
-time_corr_speech=[]
-
-time_corr_music=[]
-
-time_corr_rest=[]
 
 for isub, subject in enumerate(subject_list):
 ## Load the data from the HDF fil
     print(subject, isub)
     
     #MUSIC
-<<<<<<< HEAD
-    with h5py.File(pjoin('seeg_hgenv_down_down_h5py/', subject + '_hgenv_down_down_seeg_preproc.hdf5'), 'r') as f:
-=======
     with h5py.File(pjoin('seeg_data_h_env_down_down_h5py/', subject + '_down_down_seeg_preproc.hdf5'), 'r') as f:
->>>>>>> a2420c9950226a425412fadd94aaef0c87582e7b
         print(f.keys())
         print('music', f['music'].shape)
 
@@ -190,11 +206,7 @@ for isub, subject in enumerate(subject_list):
         data_m=f['music'][...]
     
     #SPEECH
-<<<<<<< HEAD
-    with h5py.File(pjoin('seeg_hgenv_down_down_h5py/', subject + '_hgenv_down_down_seeg_preproc.hdf5'), 'r') as f:
-=======
     with h5py.File(pjoin('seeg_data_h_env_down_down_h5py/', subject + '_down_down_seeg_preproc.hdf5'), 'r') as f:
->>>>>>> a2420c9950226a425412fadd94aaef0c87582e7b
         print(f.keys())
         print('speech', f['speech'].shape)
         print('speech', f['speech'].shape)
@@ -202,11 +214,7 @@ for isub, subject in enumerate(subject_list):
         data_s=f['speech'][...]
 
     #REST
-<<<<<<< HEAD
-    with h5py.File(pjoin('seeg_hgenv_down_down_h5py/', subject + '_hgenv_down_down_seeg_preproc.hdf5'), 'r') as f:
-=======
     with h5py.File(pjoin('seeg_data_h_env_down_down_h5py/', subject + '_down_down_seeg_preproc.hdf5'), 'r') as f:
->>>>>>> a2420c9950226a425412fadd94aaef0c87582e7b
         print(f.keys())
         print('rest', f['rest'].shape)
         print('rest', f['rest'].shape)
@@ -242,178 +250,45 @@ for isub, subject in enumerate(subject_list):
     clean_rest = np.delete(data_r, ch_i, axis=0)
 
 #selecting only the channels we want, in this script H
-    ch_H_i= [i for i, ch in enumerate(clean_chnames) if ch not in ch_H]
-    ch_wH_i= [i for i, ch in enumerate(clean_chnames) if ch in ch_H]
+    ch_H_i= [i for i, ch in enumerate(clean_chnames) if ch in ch_H]
     final_channels=[ch for i, ch in enumerate(clean_chnames) if i not in ch_H_i]
     print(final_channels)
     clean_music_H = np.delete(clean_music, ch_H_i, axis=0)
     clean_speech_H = np.delete(clean_speech, ch_H_i, axis=0)
     clean_rest_H = np.delete(clean_rest, ch_H_i, axis=0)
     
-    clean_music_without_H = np.delete(clean_music, ch_wH_i, axis=0)
-    clean_speech_without_H = np.delete(clean_speech, ch_wH_i, axis=0)
-    clean_rest_without_H = np.delete(clean_rest, ch_wH_i, axis=0)
+    clean_music_without_H = np.delete(clean_music, ch_H_i, axis=0)
+    clean_speech_without_H = np.delete(clean_speech, ch_H_i, axis=0)
+    clean_rest_without_H = np.delete(clean_rest, ch_H_i, axis=0)
     
     #clean_mu=clean2(clean_music_H, N=3)
     #clean_sp=clean2(clean_speech_H, N=3)
     #clean_re=clean2(clean_rest_H, N=3)
     
-<<<<<<< HEAD
-    zdata_speech=stats.zscore(clean_speech, axis=1)
-    zdata_music=stats.zscore(clean_music, axis=1)
-    zdata_rest=stats.zscore(clean_rest, axis=1)
-=======
-    zdata_speech=stats.zscore(clean_speech_H, axis=1)
-    zdata_music=stats.zscore(clean_music_H, axis=1)
-    zdata_rest=stats.zscore(clean_rest_H, axis=1)
->>>>>>> a2420c9950226a425412fadd94aaef0c87582e7b
-
+    zdata_speech=stats.zscore(clean_speech_without_H)
+    zdata_music=stats.zscore(clean_music_without_H)
+    zdata_rest=stats.zscore(clean_rest_without_H)
     
     #SPEECH
     
-    #t_tot=len(zdata_speech[1,:])
-    x=zdata_speech
-    x=x.T
-    edge=go_edge(x)
-    '''for i in [1,30,100, 300,500,1000,1400,4000,5000]:
-        plt.plot(edge.T[i])
-        plt.show()
-        plt.close()
-        plt.hist(edge.T[i])
-        plt.show()
-        plt.close()'''
+    edge_speech[subject]=go_edge(zdata_speech.T).T
+
+edge_corr_matrix=[]
+for i in np.arange(1,len(subject_list)):
+    for j in range(i):
         
-    
-    rss=np.sqrt(np.sum(edge**2, axis=1))
-    #order=np.argsort(np.abs(stats.zscore(rss)))
-    
-    order=np.argsort(rss)
-    
-    """plt.plot(rss[:1000])
-    plt.show()
-    plt.close()
-    
-    plt.plot(rss[300:600])
-    plt.show()
-    plt.close()
-    
-    plt.plot(rss[600:900])
-    plt.show()
-    plt.close()
-    
-    plt.plot(rss[900:1200])
-    plt.show()
-    plt.close()"""
-    
-    corr_time=np.corrcoef(edge)[np.ix_(order,order)]
-    
-    #corr_time=np.corrcoef(edge)
-    
-    time_corr_speech.append(np.sum(corr_time, axis=0))
-    plt.figure(figsize=(12,8))
-    plt.imshow(corr_time, aspect='auto', vmin=-0.07, vmax=0.07)
-    plt.colorbar()
-    plt.tight_layout()
-    plt.title('speech')
-    plt.show()
-    plt.close()
-    
-    #MUSIC
-    
-    x=zdata_music
-    x=x.T
-    edge=go_edge(x)
-    """
-    for i in [1,30,56,76]:
-        plt.plot(edge.T[i])
-        plt.show()
-        plt.close()
-        plt.hist(edge.T[i])
-        plt.show()
-        plt.close()"""
+        edge_corr=[]
         
-    rss=np.sqrt(np.sum(edge**2, axis=1))
-    #order=np.argsort(np.abs(stats.zscore(rss)))
-    order=np.argsort(rss)
-    
-    corr_time=np.corrcoef(edge)[np.ix_(order,order)]
-    
-    #corr_time=np.corrcoef(edge)
-    
-    time_corr_music.append(np.sum(corr_time, axis=0))
-    
-    plt.figure(figsize=(12,8))
-    plt.imshow(corr_time, aspect='auto', vmin=-0.02, vmax=0.02)
-    plt.colorbar()
-    plt.tight_layout()
-    plt.title('music')
-    plt.show()
-    plt.close()
-    #REST
-    
-    x=zdata_rest
-    x=x.T
-    edge=go_edge(x)
-    """
-    for i in [1,30,100, 300,500,1000,56,243,1400,2000,3000,4000,5000]:
-        plt.plot(edge.T[i])
-        plt.show()
-        plt.close()
-        plt.hist(edge.T[i])
-        plt.show()
-        plt.close()"""
+        for k in range(min(len(edge_speech[subject_list[i]]), len(edge_speech[subject_list[j]]))):
+            edge_corr.append(pd.Series(edge_speech[subject_list[i]][k,:]).corr(pd.Series(edge_speech[subject_list[j]][k,:])))
         
-    rss=np.sqrt(np.sum(edge**2, axis=1))
-    
-    #order=np.argsort(np.abs(stats.zscore(rss)))
-    order=np.argsort(rss)
-    
-    corr_time=np.corrcoef(edge)[np.ix_(order,order)]
-    
-    #corr_time=np.corrcoef(edge)
-    
-    time_corr_rest.append(np.sum(corr_time, axis=0))
-    
-    plt.figure(figsize=(12,8))
-    plt.imshow(corr_time, aspect='auto', vmin=-0.02, vmax=0.02)
-    plt.colorbar()
-    plt.tight_layout()
-    plt.title('rest')
-    plt.show()
-    plt.close()
-    
-    
-"""    
-    
-time_corr_speech=np.array(time_corr_speech)
-corr_time_corr_speech=np.corrcoef(time_corr_speech)
-plt.figure(figsize=(12,8))
-plt.imshow(corr_time_corr_speech, aspect="auto")
-plt.colorbar()
-plt.tight_layout()
-plt.title('speech')
+        edge_corr_matrix.append(edge_corr)
+            
+for i in range(len(edge_corr_matrix)):
+    plt.plot(edge_corr_matrix[i])
 plt.show()
 plt.close()
-
-time_corr_music=np.array(time_corr_music)
-corr_time_corr_music=np.corrcoef(time_corr_music)
-plt.figure(figsize=(12,8))
-plt.imshow(corr_time_corr_music, aspect="auto")
-plt.colorbar()
-plt.tight_layout()
-plt.title('music')
-plt.show()
-plt.close()
-
-time_corr_rest=np.array(time_corr_rest)
-corr_time_corr_rest=np.corrcoef(time_corr_rest)
-plt.figure(figsize=(12,8))
-plt.imshow(corr_time_corr_rest, aspect="auto")
-plt.colorbar()
-plt.tight_layout()
-plt.title('rest')
-plt.show()
-plt.close() """  
+        
     
     
     
@@ -423,3 +298,8 @@ plt.close() """
     
     
     
+    
+    
+    
+    
+       

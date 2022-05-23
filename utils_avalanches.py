@@ -23,7 +23,7 @@ import pickle
 import warnings 
 
 
-def go_avalanches(data, thre=3., direc=0, binsize=1, sampling=100):
+def go_avalanches(data, thre=3., direc=0, binsize=1):
     
     #method can be simple or area. It depends on which criteria we want the algorithm to work.
     
@@ -48,11 +48,11 @@ def go_avalanches(data, thre=3., direc=0, binsize=1, sampling=100):
     bratio=np.exp(np.mean(np.log(dfb_a[1:]/dfb_a[:-1])))
     NoAval=np.where(dfb_ampl==0)[0]
     
-    plt.figure(figsize=(12,8))
+    """plt.figure(figsize=(12,8))
     plt.imshow(Zbin.T[:,:1000], aspect='auto', interpolation='none')
     plt.colorbar()
     plt.show()
-    plt.close()
+    plt.close()"""
     
     inter=np.arange(1,len(Zbin)+1); inter[NoAval]=0
     Avals_ranges=consecutiveRanges(inter)
@@ -75,6 +75,7 @@ def go_avalanches(data, thre=3., direc=0, binsize=1, sampling=100):
 def go_avalanches_general(data, thre=3., direc=0, binsize=1, event_rate=0, sampling=100, threshold=[], method='simple'):
     
     #method can be simple or area. It depends on which criteria we want the algorithm to work.
+    
     if method=='simple':
         if event_rate==0:
             if direc==1:
@@ -85,6 +86,7 @@ def go_avalanches_general(data, thre=3., direc=0, binsize=1, event_rate=0, sampl
                 Zb=np.where(np.abs(stats.zscore(data))>thre,1,0)
             else:
                 print('wrong direc')
+        
         if threshold!=[]:            
             n=len(data[0,:])
             zb=[]
@@ -102,6 +104,7 @@ def go_avalanches_general(data, thre=3., direc=0, binsize=1, event_rate=0, sampl
             Zb=np.array(zb).T
         
         elif event_rate!=0:
+            
             n=len(data[0,:])
             percentile=100-(event_rate/sampling)*100
             data=stats.zscore(data)
@@ -112,6 +115,7 @@ def go_avalanches_general(data, thre=3., direc=0, binsize=1, event_rate=0, sampl
                     thre=np.percentile(data[:,i], percentile)
                     tb=np.where(data[:,i]>thre,1,0)
                     threshold.append(thre)
+                
                 elif direc==-1:
                     thre=np.percentile(-data[:,i], percentile)
                     tb=np.where(data[:,i]<-thre,1,0)
@@ -233,12 +237,12 @@ def go_avalanches_general(data, thre=3., direc=0, binsize=1, event_rate=0, sampl
     dfb_a=dfb_ampl[dfb_ampl!=0]
     bratio=np.exp(np.mean(np.log(dfb_a[1:]/dfb_a[:-1])))
     NoAval=np.where(dfb_ampl==0)[0]
-    
+    """
     plt.figure(figsize=(12,8))
     plt.imshow(Zbin.T[:,:1000], aspect='auto', interpolation='none')
     plt.colorbar()
     plt.show()
-    plt.close()
+    plt.close()"""
     
     inter=np.arange(1,len(Zbin)+1); inter[NoAval]=0
     Avals_ranges=consecutiveRanges(inter)
