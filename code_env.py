@@ -42,10 +42,11 @@ warnings.simplefilter('ignore')
 
 #CREATING THE LIST OF SUBJECT TO ANALYSE. 
 
+path='C:/Users/matte/OneDrive/Documenti/matteo'
 #In a first moment we create the list of all the name of the data set we have
-arr_mu = os.listdir('/home/jeremy/anaconda3/matteo/seeg_fif_data/music')
-arr_rest = os.listdir('/home/jeremy/anaconda3/matteo/seeg_fif_data/speech')
-arr_speech = os.listdir('/home/jeremy/anaconda3/matteo/seeg_fif_data/rest')
+arr_mu = os.listdir(path+'/seeg_fif_data/music')
+arr_rest = os.listdir(path+'/seeg_fif_data/speech')
+arr_speech = os.listdir(path+'/seeg_fif_data/rest')
 
 subject_set_mu=set()
 subject_set_speech=set()
@@ -68,7 +69,7 @@ subject_list=list(subject_set_mu.intersection(subject_set_speech,subject_set_res
 total_channels_set=set()
 
 for subject in subject_list:
-    with h5py.File(pjoin('/home/jeremy/anaconda3/matteo/seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path+'/seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
         print(f.keys())
         print('chnames', f['chnames'].shape)
         
@@ -92,9 +93,9 @@ rss_speech={}
 rss_rest={}
 
 #loading the bad times indices. 
-set_music=sav.load_obj("/home/jeremy/anaconda3/matteo/set_music_bad_times_100hz")
-set_speech=sav.load_obj("/home/jeremy/anaconda3/matteo/set_speech_bad_times_100hz")
-set_rest=sav.load_obj("/home/jeremy/anaconda3/matteo/set_rest_bad_times_100hz")
+set_music=sav.load_obj(path+"/set_music_bad_times_100hz")
+set_speech=sav.load_obj(path+"/set_speech_bad_times_100hz")
+set_rest=sav.load_obj(path+"/set_rest_bad_times_100hz")
 
 print("the bad point are about in music", len(set_music))
 print("the bad point are about in speech", len(set_speech))
@@ -108,12 +109,12 @@ sum_act_rest=[]
 
 t=20000
 
-for isub, subject in enumerate(subject_list):
+for isub, subject in enumerate(['sub-3ef8645f99c5']):
 ## Load the data from the HDF fil
     print(subject, isub)
     
     #MUSIC
-    with h5py.File(pjoin('/home/jeremy/anaconda3/matteo/seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path+'/seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('music', f['music'].shape)
 
@@ -121,7 +122,7 @@ for isub, subject in enumerate(subject_list):
         data_m=f['music'][...]
     
     #SPEECH
-    with h5py.File(pjoin('/home/jeremy/anaconda3/matteo/seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path+'/seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('speech', f['speech'].shape)
         print('speech', f['speech'].shape)
@@ -129,7 +130,7 @@ for isub, subject in enumerate(subject_list):
         data_s=f['speech'][...]
 
     #REST
-    with h5py.File(pjoin('/home/jeremy/anaconda3/matteo/seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path+'/seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('rest', f['rest'].shape)
         print('rest', f['rest'].shape)
@@ -140,13 +141,13 @@ for isub, subject in enumerate(subject_list):
 # redefine path
 # below example of loading of music data.
 
-    with h5py.File(pjoin('/home/jeremy/anaconda3/matteo/seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path+'/seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
         print(f.keys())
         print('chnames', f['chnames'].shape)
     
         chnames = f['chnames'][...].astype('U')
 
-    with h5py.File(pjoin('/home/jeremy/anaconda3/matteo/seeg_data_h5py/h5_misc/', subject + '_misc.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path+'/seeg_data_h5py/h5_misc/', subject + '_misc.hdf5'), 'r') as f:
         print(f.keys())
         print('outlier_chans', f['outlier_chans']['strict_bads_names'])
 
@@ -216,7 +217,7 @@ for isub, subject in enumerate(subject_list):
     #CLEANING PROCESS
     
     N=7
-    
+    """
     std_speech=np.std(zdata_speech_art)
     std_music=np.std(zdata_music_art)
     std_rest=np.std(zdata_rest_art)
@@ -261,14 +262,18 @@ for isub, subject in enumerate(subject_list):
     zdata_speech=fc.clean(zdata_speech_art, N=6)
     zdata_rest=fc.clean(zdata_rest_art, N=6)
     
-    """
+    
     sum_act_speech.append(np.sqrt(np.sum(zdata_speech**2, axis=0)))
     sum_act_music.append(np.sqrt(np.sum(zdata_music**2, axis=0)))
-    sum_act_rest.append(np.sqrt(np.sum(zdata_rest**2, axis=0)))"""
+    sum_act_rest.append(np.sqrt(np.sum(zdata_rest**2, axis=0)))
 
     clean_sp=np.delete(clean_speech, list(set_speech), axis=1)
     clean_mu=np.delete(clean_music, list(set_music), axis=1)
-    clean_re=np.delete(clean_rest, list(set_rest), axis=1)
+    clean_re=np.delete(clean_rest, list(set_rest), axis=1)"""
+    
+    clean_sp=np.delete(clean_speech, list(set_speech),axis=1)
+    clean_mu=np.delete(clean_music, list(set_music),axis=1)
+    clean_re=np.delete(clean_rest, list(set_rest),axis=1)
     
     zdata_speech=stats.zscore(clean_sp, axis=1)
     zdata_music=stats.zscore(clean_mu, axis=1)
@@ -279,7 +284,7 @@ for isub, subject in enumerate(subject_list):
     
     #zdata_speech_purified=zdata_speech[:,:len(zdata_speech_stimulus)]-zdata_speech_stimulus[:len(zdata_speech)]
     #zdata_music_purified=zdata_music[:,:len(zdata_music_stimulus)]-zdata_music_stimulus[:len(zdata_music)]
-    
+   
     #SPEECH
     t_tot=len(zdata_speech[1,:])
     num=int(t_tot/t)
@@ -304,6 +309,7 @@ for isub, subject in enumerate(subject_list):
         
         x=x.T
         edge_speech=fc.go_edge(x)
+        
         #PLOTTING THE EDGES
         plt.figure(figsize=(12,8))
         plt.imshow(edge_speech.T[:,:10000], aspect='auto', vmin=-1, vmax=1)
@@ -352,7 +358,7 @@ for isub, subject in enumerate(subject_list):
         #x=np.where(abs(x)>5, abs(x)*5/x, x)
     
         edge_music=fc.go_edge(x)
-        
+        """
         #PLOTTING THE EDGES
         plt.figure(figsize=(12,8))
         plt.imshow(edge_music.T[:,:10000], aspect='auto', vmin=-1, vmax=1)
@@ -363,14 +369,14 @@ for isub, subject in enumerate(subject_list):
         plt.colorbar()
         plt.tight_layout()
         plt.show()
-        plt.close()
+        plt.close()"""
         
         print('edge music shape', edge_music.shape)
         if subject in rss_music:
             rss_music[subject]=np.concatenate((rss_music[subject],np.sqrt(np.sum(edge_music**2, axis=1))))
         else:
             rss_music[subject]=np.sqrt(np.sum(edge_music**2, axis=1))
-        
+        """
         #PLOTTING THE RSS
         plt.figure(figsize=(14,6))
         plt.plot(rss_music[subject][t_list[j]:t_list[j]+10000])
@@ -383,7 +389,7 @@ for isub, subject in enumerate(subject_list):
         plt.hist(stats.zscore(rss_music[subject]), 300)
         plt.title("zscore of the rss distribution, speech, subject: "+ subject)
         plt.show()
-        plt.close()
+        plt.close()"""
         
     #REST
     
@@ -401,7 +407,7 @@ for isub, subject in enumerate(subject_list):
         #x=np.where(abs(x)>5, abs(x)*5/x, x)
     
         edge_rest=fc.go_edge(x)
-        
+        """
         #PLOTTING THE EDGES
         plt.figure(figsize=(12,8))
         plt.imshow(edge_rest.T[:,:10000], aspect='auto', vmin=-1, vmax=1)
@@ -412,13 +418,13 @@ for isub, subject in enumerate(subject_list):
         plt.colorbar()
         plt.tight_layout()
         plt.show()
-        plt.close()
+        plt.close()"""
         
         if subject in rss_rest:
             rss_rest[subject]=np.concatenate((rss_rest[subject],np.sqrt(np.sum(edge_rest**2, axis=1))))
         else:
             rss_rest[subject]=np.sqrt(np.sum(edge_rest**2, axis=1))
-            
+        """    
         #PLOTTING THE RSS
         plt.figure(figsize=(14,6))
         plt.plot(rss_music[subject][t_list[j]:t_list[j]+10000])
@@ -431,7 +437,7 @@ for isub, subject in enumerate(subject_list):
         plt.hist(stats.zscore(rss_music[subject]), 300)
         plt.title("zscore of the rss distribution, speech, subject: " + subject)
         plt.show()
-        plt.close()
+        plt.close()"""
         
     print('')
     print('')
@@ -507,7 +513,7 @@ plt.show()
 plt.close()
 
 print('The mean correlation during speech listening is', np.mean(np.corrcoef(rss_array_speech)[np.triu_indices(19, k = 1)]))
-print('The result of the correlation is this number of standard daviation away from the mean of the distribution',np.mean(np.corrcoef(rss_array_speech)[np.triu_indices(19, k = 1)])/np.std(list_mean_corr_speech))
+#('The result of the correlation is this number of standard daviation away from the mean of the distribution',np.mean(np.corrcoef(rss_array_speech)[np.triu_indices(19, k = 1)])/np.std(list_mean_corr_speech))
 print('The number of value of correlation > 0.01is', len(np.argwhere(np.corrcoef(rss_array_speech)[np.triu_indices(19, k = 1)]>0.01)))
 print('The number of values of correlation > 0.02 is', len(np.argwhere(np.corrcoef(rss_array_speech)[np.triu_indices(19, k = 1)]>0.02)))
 

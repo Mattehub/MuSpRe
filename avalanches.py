@@ -39,12 +39,14 @@ import Utils_FC as fc
 
 warnings.simplefilter('ignore')
 
+path='C:/Users/matte/OneDrive/Documenti/matteo/'
+
 #CREATING THE LIST OF SUBJECTS
 
 sound_list=['rest','music','speech']
-arr_mu = os.listdir('seeg_fif_data/music')
-arr_rest = os.listdir('seeg_fif_data/speech')
-arr_speech = os.listdir('seeg_fif_data/rest')
+arr_mu = os.listdir(path +'seeg_fif_data/music')
+arr_rest = os.listdir(path +'seeg_fif_data/speech')
+arr_speech = os.listdir(path +'seeg_fif_data/rest')
 
 subject_set_mu=set()
 subject_set_speech=set()
@@ -67,7 +69,7 @@ subject_list=list(subject_set_mu.intersection(subject_set_speech,subject_set_res
 total_channels_set=set()
 
 for subject in subject_list:
-    with h5py.File(pjoin('seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path +'seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
         #print(f.keys())
         #print('chnames', f['chnames'].shape)
         
@@ -128,7 +130,7 @@ for isub, subject in enumerate(subject_list):
     fc_dict[subject]={}
     
     #MUSIC
-    with h5py.File(pjoin('seeg_data_h_env_down_h5py/', subject + '_down_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path+'seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('music', f['music'].shape)
 
@@ -136,31 +138,33 @@ for isub, subject in enumerate(subject_list):
         data_m=f['music'][...]
     
     #SPEECH
-    with h5py.File(pjoin('seeg_data_h_env_down_h5py/', subject + '_down_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path+'seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
+        print('speech', f['speech'].shape)
         print('speech', f['speech'].shape)
         #data_speech[subject]= f['speech'][...]
         data_s=f['speech'][...]
 
     #REST
-    with h5py.File(pjoin('seeg_data_h_env_down_h5py/', subject + '_down_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path+'seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('rest', f['rest'].shape)
-
+        print('rest', f['rest'].shape)
         #data_rest[subject]=f['rest'][...]
         data_r=f['rest'][...]
+
 
 
 # redefine path
 # below example of loading of music data.
 
-    with h5py.File(pjoin('seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path+ 'seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
         print(f.keys())
         print('chnames', f['chnames'].shape)
     
         chnames = f['chnames'][...].astype('U')
 
-    with h5py.File(pjoin('seeg_data_h5py/h5_misc/', subject + '_misc.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path + 'seeg_data_h5py/h5_misc/', subject + '_misc.hdf5'), 'r') as f:
         print(f.keys())
         print('outlier_chans', f['outlier_chans']['strict_bads_names'])
 
@@ -198,15 +202,19 @@ for isub, subject in enumerate(subject_list):
     #clean_sp=clean2(clean_speech_H, N=3)
     #clean_re=clean2(clean_rest_H, N=3)
     
-    zdata_speech=stats.zscore(clean_speech, axis=1)
-    zdata_music=stats.zscore(clean_music, axis=1)
-    zdata_rest=stats.zscore(clean_rest, axis=1)
-  
+    zdata_speech_art=stats.zscore(clean_speech, axis=1)
+    zdata_music_art=stats.zscore(clean_music, axis=1)
+    zdata_rest_art=stats.zscore(clean_rest, axis=1)
+    
+    zdata_speech=np.where(np.abs(zdata_speech_art)>6, 0, zdata_speech_art)
+    zdata_music=np.where(np.abs(zdata_music_art)>6, 0, zdata_music_art)
+    zdata_rest=np.where(np.abs(zdata_rest_art)>6, 0, zdata_rest_art)
+    
     speech_data_av=zdata_speech.copy()
     music_data_av=zdata_music.copy()
     rest_data_av=zdata_rest.copy()
     
-    thres=2.8
+    thres=np.percentile(zdata_rest, 99)
     print(thres)
     
     avalanches_rest, _ =av.go_avalanches_general(zdata_rest.T, thre=thres, direc=0, binsize=2, event_rate=0, sampling=100, threshold=[], method='simple')
@@ -363,8 +371,8 @@ for i, sub in enumerate(subject_list):
             plt.title(sub+'  '+sound)
         else:
             plt.title(sound)
-        if j==2:
-            plt.colorbar()
+        
+        plt.colorbar()
 plt.show()
 plt.close()
 
