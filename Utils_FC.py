@@ -136,8 +136,15 @@ def go_edge(tseries):
     iTriup= np.triu_indices(nregions,k=1) 
     gz=stats.zscore(tseries)
     Eseries = gz[:,iTriup[0]]*gz[:,iTriup[1]]
+    
     return Eseries
 
+def go_edge_names(names):
+    nregions=len(names)
+    iTriup= np.triu_indices(nregions,k=1) 
+    Enames=[str(names[iTriup[0][i]])+ str(' - ') + str(names[iTriup[1][i]]) for i in range(len(iTriup[0]))]
+    
+    return Enames
 
 
 def go_edge_list(tseries, edge_list):

@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri May 27 16:25:42 2022
+
+@author: jeremy
+"""
+
 # -*- coding: utf-8 -*-
 """
 Created on Sun May 22 02:08:26 2022
@@ -109,6 +117,9 @@ sum_act_rest=[]
 
 t=20000
 
+eROI=fc.go_edge_names(list(allr))
+
+    
 for isub, subject in enumerate(subject_list):
 ## Load the data from the HDF fil
     print(subject, isub)
@@ -155,7 +166,7 @@ for isub, subject in enumerate(subject_list):
         print('outlier_chans', f['outlier_chans']['strict_bads_names'])
 
         bad_chans = f['outlier_chans']['strict_bads_names'][...].astype('U')
-        mu_bad_epo = f['outlie[:-1]r_epochs']['music']['strict_bads_epochs'][...]
+        mu_bad_epo = f['outlier_epochs']['music']['strict_bads_epochs'][...]
         sp_bad_epo = f['outlier_epochs']['speech']['strict_bads_epochs'][...]
     
     #Here we load eventually the envelope of the stimula
@@ -334,11 +345,16 @@ for isub, subject in enumerate(subject_list):
         plt.show()
         plt.close()
         
+        for i in eROI:
+            indices=[j for j, edge in enumerate(Eregions) if i in edge]
+            if subject in rss_speech and i in rss_speech[subject]:
+                rss_speech[subject][i]=np.concatenate((rss_speech[subject][i],np.sqrt(np.sum(edge_speech[indices]**2, axis=1))))
+            elif subject in rss_speech:
+                rss_speech[subject][i]=np.sqrt(np.sum(edge_speech[indices]**2, axis=1))
+            else:
+                rss_speech[subject]={}
+                rss_speech[subject][i]=np.sqrt(np.sum(edge_speech[indices]**2, axis=1))
         
-        if subject in rss_speech:
-            rss_speech[subject]=np.concatenate((rss_speech[subject],np.sqrt(np.sum(edge_speech**2, axis=1))))
-        else:
-            rss_speech[subject]=np.sqrt(np.sum(edge_speech**2, axis=1))
         """
         #PLOTTING THE RSS
         plt.figure(figsize=(14,6))
@@ -391,10 +407,15 @@ for isub, subject in enumerate(subject_list):
         plt.close()"""
         
         print('edge music shape', edge_music.shape)
-        if subject in rss_music:
-            rss_music[subject]=np.concatenate((rss_music[subject],np.sqrt(np.sum(edge_music**2, axis=1))))
-        else:
-            rss_music[subject]=np.sqrt(np.sum(edge_music**2, axis=1))
+        for i in eROI:
+            indices=[j for j, edge in enumerate(Eregions) if i in edge]
+            if subject in rss_music and i in rss_music[subject]:
+                rss_music[subject][i]=np.concatenate((rss_music[subject][i],np.sqrt(np.sum(edge_music[indices]**2, axis=1))))
+            elif subject in rss_music:
+                rss_music[subject][i]=np.sqrt(np.sum(edge_music[indices]**2, axis=1))
+            else:
+                rss_music[subject]={}
+                rss_music[subject][i]=np.sqrt(np.sum(edge_music[indices]**2, axis=1))
         """
         #PLOTTING THE RSS
         plt.figure(figsize=(14,6))
@@ -439,10 +460,15 @@ for isub, subject in enumerate(subject_list):
         plt.show()
         plt.close()"""
         
-        if subject in rss_rest:
-            rss_rest[subject]=np.concatenate((rss_rest[subject],np.sqrt(np.sum(edge_rest**2, axis=1))))
-        else:
-            rss_rest[subject]=np.sqrt(np.sum(edge_rest**2, axis=1))
+        for i in eROI:
+            indices=[j for j, edge in enumerate(Eregions) if i in edge]
+            if subject in rss_rest and i in rss_rest[subject]:
+                rss_rest[subject][i]=np.concatenate((rss_rest[subject][i],np.sqrt(np.sum(edge_rest[indices]**2, axis=1))))
+            elif subject in rss_speech:
+                rss_rest[subject][i]=np.sqrt(np.sum(edge_rest[indices]**2, axis=1))
+            else:
+                rss_rest[subject]={}
+                rss_rest[subject][i]=np.sqrt(np.sum(edge_rest[indices]**2, axis=1))
         """    
         #PLOTTING THE RSS
         plt.figure(figsize=(14,6))
@@ -466,60 +492,70 @@ print('end data, start plotting')
 #preplotting and plotting
 
 #SPEECH
+corr_speech=[]
 rss_list_speech=[]
 z_rss_list_speech=[]
-for subject in subject_list:
-    rss_list_speech.append(rss_speech[subject].T)
-    z_rss_list_speech.append(stats.zscore(rss_speech[subject]).T)
-
-rss_array_speech=np.array(rss_list_speech)
-z_rss_array_speech=np.array(z_rss_list_speech)
-
-plt.figure(figsize=(12,8))
-plt.imshow(rss_array_speech, aspect='auto')
-plt.colorbar()
-plt.tight_layout()
-plt.title('speech')
-plt.show()
-plt.close()
-
-#MUSIC
-rss_list_music=[]
-z_rss_list_music=[]
-for subject in subject_list:
-    rss_list_music.append(rss_music[subject].T)
-    z_rss_list_music.append(stats.zscore(rss_music[subject]).T)
-
-rss_array_music=np.array(rss_list_music)
-z_rss_array_music=np.array(z_rss_list_music)
-
+for i in eROI:
+    for subject in subject_list:
+        rss_list_speech.append(rss_speech[subject][i].T)
+        
+    rss_array_speech=np.array(rss_list_speech)
     
-plt.figure(figsize=(12,8))
-plt.imshow(rss_array_music, aspect='auto')
-plt.colorbar()
-plt.tight_layout()
-plt.title('music')
-plt.show()
-plt.close()
+    """
+    plt.figure(figsize=(12,8))
+    plt.imshow(rss_array_speech, aspect='auto')
+    plt.colorbar()
+    plt.tight_layout()
+    plt.title('speech')
+    plt.show()
+    plt.close()"""
+    
+    corr_speech.append(np.array([a in np.corrcoef(rss_array_speech)]))
+    
+#MUSIC
+corr_music=[]
+rss_list_music=[]
 
+for i in eROI:
+    for subject in subject_list:
+        rss_list_music.append(rss_music[subject][i].T)
+        
+    rss_array_music=np.array(rss_list_music)
+    
+    """
+    plt.figure(figsize=(12,8))
+    plt.imshow(rss_array_speech, aspect='auto')
+    plt.colorbar()
+    plt.tight_layout()
+    plt.title('speech')
+    plt.show()
+    plt.close()"""
+    
+    corr_music.append(np.array([a in np.corrcoef(rss_array_music)]))
+    
 #REST
+corr_rest=[]
 rss_list_rest=[]
 z_rss_list_rest=[]
-for subject in subject_list:
-    rss_list_rest.append(rss_rest[subject].T)
-    z_rss_list_rest.append(stats.zscore(rss_rest[subject]).T)
+for i in eROI:
+    for subject in subject_list:
+        rss_list_rest.append(rss_rest[subject][i].T)
+        
+    rss_array_rest=np.array(rss_list_rest)
+    
+    """
+    plt.figure(figsize=(12,8))
+    plt.imshow(rss_array_speech, aspect='auto')
+    plt.colorbar()
+    plt.tight_layout()
+    plt.title('speech')
+    plt.show()
+    plt.close()"""
+    
+    corr_rest.append(np.array([a in np.corrcoef(rss_array_rest)]))
+    
 
-rss_array_rest=np.array(rss_list_rest)
-z_rss_array_rest=np.array(z_rss_list_rest)
-
-plt.figure(figsize=(12,8))
-plt.imshow(rss_array_rest, aspect='auto')
-plt.colorbar()
-plt.tight_layout()
-plt.title('rest')
-plt.show()
-plt.close()
-
+"""
 sav.save_obj(np.corrcoef(rss_array_speech) , path + 'corr_matrix_allsubs_speech') 
 plt.figure(figsize=(12,8))
 plt.imshow(np.corrcoef(rss_array_speech), aspect='auto')
@@ -560,125 +596,3 @@ plt.show()
 plt.close()
 print('The mean correlation in resting state is', np.mean(np.corrcoef(rss_array_rest)[np.triu_indices(19, k = 1)]))
 """
-rss_list_speech=[i for sub in rss_array_speech for i in sub]
-plt.hist(rss_list_speech[rss_list_speech], 100)
-plt.title("rss distribution across all subjects, using threshold for the artifacts N="+str(N)+"times standard deviation")
-plt.show()
-plt.close()
-
-rss_list_music=[i for sub in rss_array_music for i in sub]
-plt.hist(rss_list_music[rss_list_music<400], 100)
-plt.show()
-plt.close()
-
-rss_list_rest=[i for sub in rss_array_rest for i in sub]
-plt.hist(rss_list_rest[rss_list_rest<400], 100)
-plt.show()
-plt.close()"""
-
-
-#correlation studying activities
-"""
-plt.figure(figsize=(12,8))
-plt.imshow(np.corrcoef(np.array(sum_act_speech)), aspect='auto')
-plt.colorbar()
-plt.tight_layout()
-plt.title('corr matrix, speech')
-plt.xlabel('subjects')
-plt.ylabel('subjects')
-plt.show()
-plt.close()
-
-print('The mean correlation during speech listening is', np.mean(np.corrcoef(np.array(sum_act_speech))[np.triu_indices(19, k = 1)]))
-print('The number of value of correlation > 0.15 is', len(np.argwhere(np.corrcoef(np.array(sum_act_speech))[np.triu_indices(19, k = 1)]>0.15)))
-print('The number of values of correlation > 0.2 is', len(np.argwhere(np.corrcoef(np.array(sum_act_speech))[np.triu_indices(19, k = 1)]>0.2)))
-    
-plt.figure(figsize=(12,8))
-plt.imshow(np.corrcoef(np.array(sum_act_music)), aspect='auto',)
-plt.colorbar()
-plt.tight_layout()
-plt.title('corr matrix, music')
-plt.xlabel('subjects')
-plt.ylabel('subjects')
-plt.show()
-plt.close()
-print('The mean correlation during music listening is', np.mean(np.corrcoef(np.array(sum_act_music))[np.triu_indices(19, k = 1)]))
-
-plt.figure(figsize=(12,8))
-plt.imshow(np.corrcoef(np.array(sum_act_rest)), aspect='auto')
-plt.colorbar()
-plt.tight_layout()
-plt.title('corr matrix, rest')
-plt.xlabel('subjects')
-plt.ylabel('subjects')
-plt.show()
-plt.close()
-print('The mean correlation in resting state is', np.mean(np.corrcoef(np.array(sum_act_rest))[np.triu_indices(19, k = 1)]))
-"""
-
-
-def shifting(x, n=None):
-    
-    if n==None:
-        n=np.random.choice(range(len(x)))
-    
-    x_new=np.concatenate((x[n:],x[:n]))
-    
-    return x_new
-
-def shifting_matrix(A, n_list=None):
-    
-    A_new=A.copy()
-    
-    if n_list==None:
-        for i in range(len(A)):
-            A_new[i,:]=shifting(A[i,:], n=None)
-        
-    else:
-        for i in range(len(A)):
-            A_new[i,:]=shifting(A[i,:], n=n_list[i])
-    
-    return A_new
-
-number_sim=1000
-
-list_mean_corr_music=[]
-list_mean_corr_speech=[]
-list_mean_corr_rest=[]
-
-num_sim=1000
-for i in range(num_sim):
-    
-    rss_array_music_shift=shifting_matrix(rss_array_music)
-    list_mean_corr_music.append(np.mean(np.corrcoef(rss_array_music_shift)[np.triu_indices(19, k = 1)]))
-    
-    rss_array_speech_shift=shifting_matrix(rss_array_speech)
-    list_mean_corr_speech.append(np.mean(np.corrcoef(rss_array_speech_shift)[np.triu_indices(19, k = 1)]))
-    
-    rss_array_rest_shift=shifting_matrix(rss_array_rest)
-    list_mean_corr_rest.append(np.mean(np.corrcoef(rss_array_rest_shift)[np.triu_indices(19, k = 1)]))
-    
-plt.hist(list_mean_corr_music, label='random shift')
-plt.axvline(x=np.mean(np.corrcoef(rss_array_music)[np.triu_indices(19, k = 1)]), label='our result')
-plt.title('music')
-plt.legend()
-plt.show()
-plt.close()
-
-plt.hist(list_mean_corr_speech, label='random shift')
-plt.axvline(x=np.mean(np.corrcoef(rss_array_speech)[np.triu_indices(19, k = 1)]), label='our relsult')
-plt.title('speech')
-plt.legend()
-plt.show()
-plt.close()
-
-plt.hist(list_mean_corr_rest, label='random shift')
-plt.axvline(x=np.mean(np.corrcoef(rss_array_rest)[np.triu_indices(19, k = 1)]), label='our relsult')
-plt.title('rest')
-plt.legend()
-plt.show()
-plt.close()
-
-    
-    
-    

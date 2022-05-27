@@ -39,7 +39,7 @@ import Utils_FC as fc
 
 warnings.simplefilter('ignore')
 
-path='C:/Users/matte/OneDrive/Documenti/matteo/'
+path='/home/jeremy/anaconda3/matteo/'
 
 #CREATING THE LIST OF SUBJECTS
 
@@ -206,15 +206,15 @@ for isub, subject in enumerate(subject_list):
     zdata_music_art=stats.zscore(clean_music, axis=1)
     zdata_rest_art=stats.zscore(clean_rest, axis=1)
     
-    zdata_speech=np.where(np.abs(zdata_speech_art)>6, 0, zdata_speech_art)
-    zdata_music=np.where(np.abs(zdata_music_art)>6, 0, zdata_music_art)
-    zdata_rest=np.where(np.abs(zdata_rest_art)>6, 0, zdata_rest_art)
+    zdata_speech=np.where(np.abs(zdata_speech_art)>7, 0, zdata_speech_art)
+    zdata_music=np.where(np.abs(zdata_music_art)>7, 0, zdata_music_art)
+    zdata_rest=np.where(np.abs(zdata_rest_art)>7, 0, zdata_rest_art)
     
     speech_data_av=zdata_speech.copy()
     music_data_av=zdata_music.copy()
     rest_data_av=zdata_rest.copy()
     
-    thres=np.percentile(zdata_rest, 99)
+    thres=2.8
     print(thres)
     
     avalanches_rest, _ =av.go_avalanches_general(zdata_rest.T, thre=thres, direc=0, binsize=2, event_rate=0, sampling=100, threshold=[], method='simple')

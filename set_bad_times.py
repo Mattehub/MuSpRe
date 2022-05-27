@@ -33,11 +33,11 @@ import Utils_FC as fc
 import warnings 
 warnings.simplefilter('ignore')
 
-path='C:/Users/matte/OneDrive/Documenti/matteo'
+path='/home/jeremy/anaconda3/matteo/'
 
-arr_mu = os.listdir(path + '/seeg_fif_data/music')
-arr_rest = os.listdir(path + '/seeg_fif_data/speech')
-arr_speech = os.listdir(path + '/seeg_fif_data/rest')
+arr_mu = os.listdir(path + 'seeg_fif_data/music')
+arr_rest = os.listdir(path + 'seeg_fif_data/speech')
+arr_speech = os.listdir(path + 'seeg_fif_data/rest')
 
 subject_set_mu=set()
 subject_set_speech=set()
@@ -60,7 +60,7 @@ subject_list=list(subject_set_mu.intersection(subject_set_speech,subject_set_res
 total_channels_set=set()
 
 for subject in subject_list:
-    with h5py.File(pjoin(path + '/seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path + 'seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
         print(f.keys())
         print('chnames', f['chnames'].shape)
         
@@ -91,14 +91,14 @@ art_speech_times={}
 art_music_times={}
 art_rest_times={}
 
-N=6
+N=7
 t=30000
 for isub, subject in enumerate(subject_list):
 ## Load the data from the HDF fil
     print(subject, isub)
     
     #MUSIC
-    with h5py.File(pjoin(path + '/seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path + 'seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('music', f['music'].shape)
 
@@ -106,7 +106,7 @@ for isub, subject in enumerate(subject_list):
         data_m=f['music'][...]
     
     #SPEECH
-    with h5py.File(pjoin(path +'/seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path +'seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('speech', f['speech'].shape)
         print('speech', f['speech'].shape)
@@ -114,7 +114,7 @@ for isub, subject in enumerate(subject_list):
         data_s=f['speech'][...]
 
     #REST
-    with h5py.File(pjoin(path + '/seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path + 'seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
         print(f.keys())
         print('rest', f['rest'].shape)
         print('rest', f['rest'].shape)
@@ -125,13 +125,13 @@ for isub, subject in enumerate(subject_list):
 # redefine path
 # below example of loading of music data.
 
-    with h5py.File(pjoin(path + '/seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path + 'seeg_data_h5py/h5_electrodes/', subject + '_electrodes.hdf5'), 'r') as f:
         print(f.keys())
         print('chnames', f['chnames'].shape)
     
         chnames = f['chnames'][...].astype('U')
 
-    with h5py.File(pjoin(path + '/seeg_data_h5py/h5_misc/', subject + '_misc.hdf5'), 'r') as f:
+    with h5py.File(pjoin(path + 'seeg_data_h5py/h5_misc/', subject + '_misc.hdf5'), 'r') as f:
         print(f.keys())
         print('outlier_chans', f['outlier_chans']['strict_bads_names'])
 
@@ -177,11 +177,11 @@ for isub, subject in enumerate(subject_list):
     clean_music2=set()
     clean_rest2=set()
     
-    art_speech_times[subject]=set(np.argwhere(stats.zscore(clean_speech, axis=1) >N)[:,1])
+    art_speech_times[subject]=set(np.argwhere(np.abs(stats.zscore(clean_speech, axis=1)) >N)[:,1])
     
-    art_music_times[subject]=set(np.argwhere(stats.zscore(clean_music, axis=1) > N)[:,1])
+    art_music_times[subject]=set(np.argwhere(np.abs(stats.zscore(clean_music, axis=1)) > N)[:,1])
     
-    art_rest_times[subject]=set(np.argwhere(stats.zscore(clean_rest, axis=1) > N)[:,1])
+    art_rest_times[subject]=set(np.argwhere(np.abs(stats.zscore(clean_rest, axis=1)) > N)[:,1])
 
 set_speech=art_speech_times[subject_list[0]]
 set_music=art_music_times[subject_list[0]]
