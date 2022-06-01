@@ -244,6 +244,28 @@ def clean(x1, N=3):
             
     return x
 
+def shifting(x, n=None):
+    
+    if n==None:
+        n=np.random.choice(range(len(x)))
+    
+    x_new=np.concatenate((x[n:],x[:n]))
+    
+    return x_new
+
+def shifting_matrix(A, n_list=None):
+    
+    A_new=A.copy()
+    
+    if n_list==None:
+        for i in range(len(A)):
+            A_new[i,:]=shifting(A[i,:], n=None)
+        
+    else:
+        for i in range(len(A)):
+            A_new[i,:]=shifting(A[i,:], n=n_list[i])
+    
+    return A_new
 
 
 

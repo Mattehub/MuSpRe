@@ -36,6 +36,7 @@ import pickle
 import utils_avalanches as av
 import warnings 
 import Utils_FC as fc
+from lempel_ziv_complexity import lempel_ziv_complexity
 
 warnings.simplefilter('ignore')
 
@@ -123,6 +124,10 @@ rss_speech=[]
 rss_music=[]
 rss_rest=[]
 
+complexity_list_speech=[]
+complexity_list_music=[]
+complexity_list_rest=[]
+    
 for isub, subject in enumerate(subject_list):
 ## Load the data from the HDF fil
     print(subject, isub)
@@ -214,19 +219,87 @@ for isub, subject in enumerate(subject_list):
     music_data_av=zdata_music.copy()
     rest_data_av=zdata_rest.copy()
     
-    thres=2.8
+    thres=np.percentile(zdata_rest, 99)
     print(thres)
     
-    avalanches_rest, _ =av.go_avalanches_general(zdata_rest.T, thre=thres, direc=0, binsize=2, event_rate=0, sampling=100, threshold=[], method='simple')
+    
+    
+    
+    for n in np.arange(15,16):
+        
+        avalanches_rest =av.go_avalanches(zdata_rest.T, thre=thres, direc=0, binsize=2)
+        indices15=np.argwhere(np.array(avalanches_rest['siz'])==n)
+        avalanches15=[]
+        
+        for i in indices15:
+            a0=avalanches_rest['ranges'][i[0]][0]
+            a1=avalanches_rest['ranges'][i[0]][1]
+            proj=np.sum(avalanches_rest['Zbin'][a0:a1,:], axis=0)
+            avalanches15.append(np.where(proj>0, 1, 0))
+            string=''.join([str(elem) for elem in avalanches_rest['Zbin'][a0:a1,:].T.flatten()])
+            complexity_list_rest.append(lempel_ziv_complexity(string))
+        
+        avalanches_speech=av.go_avalanches(zdata_speech.T, thre=thres, direc=0, binsize=2)
+
+        indices15=np.argwhere(np.array(avalanches_speech['siz'])==n)
+        avalanches15=[]
+        size_speech.append(avalanches_speech['siz'])
+    
+        for i in indices15:
+            a0=avalanches_speech['ranges'][i[0]][0]
+            a1=avalanches_speech['ranges'][i[0]][1]
+            proj=np.sum(avalanches_speech['Zbin'][a0:a1,:], axis=0)
+            avalanches15.append(np.where(proj>0, 1, 0))
+            string=''.join([str(elem) for elem in avalanches_speech['Zbin'][a0:a1,:].T.flatten()])
+            complexity_list_speech.append(lempel_ziv_complexity(string))
+        
+        avalanches_music =av.go_avalanches(zdata_music.T, thre=thres, direc=0, binsize=2)
+        size_music.append(avalanches_music['siz'])
+        
+        indices15=np.argwhere(np.array(avalanches_music['siz'])==n)
+        avalanches15=[]
+        for i in indices15:
+            a0=avalanches_music['ranges'][i[0]][0]
+            a1=avalanches_music['ranges'][i[0]][1]
+            proj=np.sum(avalanches_music['Zbin'][a0:a1,:], axis=0)
+            avalanches15.append(np.where(proj>0, 1, 0))
+            string=''.join([str(elem) for elem in avalanches_music['Zbin'][a0:a1,:].T.flatten()])
+            complexity_list_music.append(lempel_ziv_complexity(string))
+        
+        a=max(len(complexity_list_speech), len(complexity_list_music), len(complexity_list_rest))
+        y,x,_=plt.hist(stats.zscore(complexity_list_speech[:a]), 15, color="lightblue", label='LZC speech')
+        y1,x1,_=plt.hist(stats.zscore(complexity_list_music[:a]), 15, color="green", label='LZC music')
+        y2,x2,_=plt.hist(stats.zscore(complexity_list_rest[:a]), 15, color="red", label='LZC rest')
+        plt.legend()
+        plt.show()
+        plt.close()
+        
+        plt.plot(x[:-1],y, color="lightblue", label='LZC speech')
+        plt.plot(x1[:-1],y1, color="green", label='LZC music')
+        plt.plot(x2[:-1],y2, color="red", label='LZC rest')
+        plt.show()
+        plt.close()
+        
+
+    """
     y=np.arange(0,len(clean_chnames),2)
     plt.figure(figsize=(15,13))
-    plt.imshow(avalanches_rest['Zbin'].T[:,:1000], aspect='auto', interpolation='none')
+    plt.imshow(avalanches_rest['Zbin'].T[:,:1000], aspect='auto', interpolation='none', vmin=-0.3, vmax=0.3)
     plt.yticks(y, clean_chnames[::2])
     plt.title('rest, after binarization, threshold='+str(thres))
     plt.colorbar()
     plt.show()
     plt.close()
     
+    """
+    plt.figure(figsize=(15,13))
+    plt.imshow(np.corrcoef(np.array(avalanches15)), aspect='auto', interpolation='none')
+    plt.title('rest, after binarization, threshold='+str(thres))
+    plt.colorbar()
+    plt.show()
+    plt.close()
+    """
+    #plotting the size distribution and fitting 
     size_rest.append(avalanches_rest['siz'])
     x,y,_=plt.hist(avalanches_rest['IAI'], 20)
     plt.show()
@@ -234,59 +307,60 @@ for isub, subject in enumerate(subject_list):
     plt.loglog(x,y[:-1])
     plt.show()
     plt.close()
-    Ebin=fc.go_edge(avalanches_rest['Zbin'])
-    rss_rest.append(np.sum(Ebin.T, axis=0))
-    fc_rest=np.mean(Ebin, axis=0)
-    n_regions=len(avalanches_rest['Zbin'][0,:])
-    FC_rest=np.zeros((n_regions,n_regions))
-    FC_rest[np.triu_indices(n_regions,1)]=fc_rest
-    FC_rest= FC_rest + FC_rest.T + np.identity(n_regions)
-    fc_dict[subject]['rest']=FC_rest
     
-    thres=2.8
-    avalanches_speech=av.go_avalanches(zdata_speech.T, thre=thres, direc=0, binsize=2)
+    #Ebin=fc.go_edge(avalanches_rest['Zbin'])
+    rss_rest.append(np.sum(avalanches_rest['Zbin'].T, axis=0))
     
-    size_speech.append(avalanches_speech['siz'])
-
+    #fc_rest=np.mean(Ebin, axis=0)
+    #n_regions=len(avalanches_rest['Zbin'][0,:])
+    #FC_rest=np.zeros((n_regions,n_regions))
+    #FC_rest[np.triu_indices(n_regions,1)]=fc_rest
+    #FC_rest= FC_rest + FC_rest.T + np.identity(n_regions)
+    #fc_dict[subject]['rest']=FC_rest"""
+    
+    
+    
+"""
     y=np.arange(0,len(clean_chnames),2)
     plt.figure(figsize=(15,13))
-    plt.imshow(avalanches_speech['Zbin'].T[:,:1000], aspect='auto', interpolation='none')
+    plt.imshow(avalanches_speech['Zbin'].T[:,:1000], aspect='auto', interpolation='none', vmin=-0.3, vmax=0.3)
     plt.title('speech, after binarization, threshold='+str(thres))
-    plt.yticks(y, clean_chnames[::2])
+    #plt.yticks(y, clean_chnames[::2])
     plt.colorbar()
     plt.show()
     plt.close()
     
-    Ebin=fc.go_edge(avalanches_speech['Zbin'])
-    rss_speech.append(np.sum(Ebin.T, axis=0))
-    fc_speech=np.mean(Ebin, axis=0)
-    n_regions=len(avalanches_speech['Zbin'][0,:])
-    FC_speech=np.zeros((n_regions,n_regions))
-    FC_speech[np.triu_indices(n_regions,1)]=fc_speech
-    FC_speech= FC_speech + FC_speech.T + np.identity(n_regions)
-    fc_dict[subject]['speech']=FC_speech
+    #Ebin=fc.go_edge(avalanches_speech['Zbin'])
+    rss_speech.append(np.sum(avalanches_speech['Zbin'].T, axis=0))
+    #fc_speech=np.mean(Ebin, axis=0)
+    #n_regions=len(avalanches_speech['Zbin'][0,:])
+    #FC_speech=np.zeros((n_regions,n_regions))
+    #FC_speech[np.triu_indices(n_regions,1)]=fc_speech
+    #FC_speech= FC_speech + FC_speech.T + np.identity(n_regions)
+    #fc_dict[subject]['speech']=FC_speech
     
-    avalanches_music =av.go_avalanches(zdata_music.T, thre=thres, direc=0, binsize=2)
-    size_music.append(avalanches_music['siz'])
     
+     
+    
+       """ 
     y=np.arange(0,len(clean_chnames),2)
     plt.figure(figsize=(15,13))
-    plt.imshow(avalanches_music['Zbin'].T[:,:1000], aspect='auto', interpolation='none')
+    plt.imshow(np.corrcoef(np.array(avalanches15)), aspect='auto', interpolation='none', vmin=-0.3, vmax=0.3)
     plt.title('music, after binarization, threshold='+str(thres))
-    plt.yticks(y, clean_chnames[::2])
+    #plt.yticks(y, clean_chnames[::2])
     plt.colorbar()
     plt.show()
     plt.close()
     
     
-    Ebin=fc.go_edge(avalanches_music['Zbin'])
-    rss_music.append(np.sum(Ebin.T, axis=0))
-    fc_music=np.mean(Ebin, axis=0)
-    n_regions=len(avalanches_music['Zbin'][0,:])
-    FC_music=np.zeros((n_regions,n_regions))
-    FC_music[np.triu_indices(n_regions,1)]=fc_music
-    FC_music= FC_music + FC_music.T + np.identity(n_regions)
-    fc_dict[subject]['music']=FC_music
+    #Ebin=fc.go_edge(avalanches_music['Zbin'])
+    rss_music.append(np.sum(avalanches_music['Zbin'].T, axis=0))
+    #fc_music=np.mean(Ebin, axis=0)
+    #n_regions=len(avalanches_music['Zbin'][0,:])
+    #FC_music=np.zeros((n_regions,n_regions))
+    #FC_music[np.triu_indices(n_regions,1)]=fc_music
+    #FC_music= FC_music + FC_music.T + np.identity(n_regions)
+    #fc_dict[subject]['music']=FC_music
     
     mean_iai_speech=[]
     mean_iai_music=[]
@@ -357,7 +431,7 @@ plt.title('IAI')
 plt.show()
 plt.close()   
 
-
+"""
 plt.figure(figsize=(28,200))
 for i, sub in enumerate(subject_list):
     for j, sound in enumerate(sound_list):
@@ -374,7 +448,7 @@ for i, sub in enumerate(subject_list):
         
         plt.colorbar()
 plt.show()
-plt.close()
+plt.close()"""
 
 b=0.25
 corr_matrix_speech=np.corrcoef(np.array(rss_speech))
@@ -446,7 +520,49 @@ plt.loglog(x2[:-1],y2, label='music')
 plt.show()
 plt.close()
 
+plt.hist(complexity_list_rest, 30, color="red", label='LZC rest')
+plt.hist(complexity_list_speech, 30, color="lightblue", label='LZC speech')
+plt.hist(complexity_list_music, 30, color="green", label='LZC music')
+plt.legend()
+plt.show()
+plt.close()
 
+list_mean_corr_music=[]
+list_mean_corr_speech=[]
+list_mean_corr_rest=[]
+"""
+num_sim=1000
+for i in range(num_sim):
+    
+    rss_array_music_shift=fc.shifting_matrix(np.array(rss_music))
+    list_mean_corr_music.append(np.mean(np.corrcoef(rss_array_music_shift)[np.triu_indices(19, k = 1)]))
+    
+    rss_array_speech_shift=fc.shifting_matrix(np.array(rss_speech))
+    list_mean_corr_speech.append(np.mean(np.corrcoef(rss_array_speech_shift)[np.triu_indices(19, k = 1)]))
+    
+    rss_array_rest_shift=fc.shifting_matrix(np.array(rss_rest))
+    list_mean_corr_rest.append(np.mean(np.corrcoef(rss_array_rest_shift)[np.triu_indices(19, k = 1)]))"""
+    
+plt.hist(list_mean_corr_music, label='random shift')
+plt.axvline(x=np.mean(np.corrcoef(np.array(rss_music))[np.triu_indices(19, k = 1)]), label='our result')
+plt.title('music')
+plt.legend()
+plt.show()
+plt.close()
+
+plt.hist(list_mean_corr_speech, label='random shift')
+plt.axvline(x=np.mean(np.corrcoef(np.array(rss_speech))[np.triu_indices(19, k = 1)]), label='our relsult')
+plt.title('speech')
+plt.legend()
+plt.show()
+plt.close()
+
+plt.hist(list_mean_corr_rest, label='random shift')
+plt.axvline(x=np.mean(np.corrcoef(np.array(rss_rest))[np.triu_indices(19, k = 1)]), label='our relsult')
+plt.title('rest')
+plt.legend()
+plt.show()
+plt.close()
 
 
     #plt.hist(avalanches_speech['siz'])

@@ -331,7 +331,7 @@ for isub, subject in enumerate(subject_list):
         
         x=x.T
         edge_speech=fc.go_edge(x)
-        
+        """
         #PLOTTING THE EDGES
         plt.figure(figsize=(12,8))
         plt.imshow(edge_speech.T[:,:10000], aspect='auto', vmin=-1, vmax=1)
@@ -343,7 +343,7 @@ for isub, subject in enumerate(subject_list):
         plt.tight_layout()
         plt.title("speech, subject: "+ subject)
         plt.show()
-        plt.close()
+        plt.close()"""
         
         for i in eROI:
             indices=[j for j, edge in enumerate(Eregions) if i in edge]

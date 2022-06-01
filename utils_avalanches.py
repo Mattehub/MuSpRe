@@ -267,6 +267,7 @@ def min_siz_filt(avalanches, min_siz):
     dur=[]
     siz=[]
     ranges=[]
+    Zbin_reduced=avalanches['Zbin'].copy()
     
     for i in range(len(avalanches['siz'])):
         if avalanches['siz'][i]>=min_siz:
@@ -274,7 +275,12 @@ def min_siz_filt(avalanches, min_siz):
             siz.append(avalanches['siz'][i])
             ranges.append(avalanches['ranges'][i])
     
-    avalanches={'dur':dur,'siz':siz,'IAI':[],'ranges':ranges,'Zbin':avalanches['Zbin'],'bratio':avalanches['bratio']}
+    Zbin_reduced[:ranges[0][0],:]=0    
+    Zbin_reduced[ranges[-1][1]:,:]=0
+    for t in range(len(ranges)-1):
+        Zbin_reduced[ranges[t][1]:ranges[t+1][0],:]=0
+            
+    avalanches={'dur':dur,'siz':siz,'IAI':[],'ranges':ranges,'Zbin':avalanches['Zbin'],'Zbin_reduced':Zbin_reduced, 'bratio':avalanches['bratio']}
     for i in range(len(ranges)-1): #It goes till the second last avalanche for avoiding bondaries effects
         xf=ranges[i][1]; xone=ranges[i+1][0]
         avalanches['IAI'].append(xone-xf)
