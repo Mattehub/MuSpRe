@@ -40,8 +40,8 @@ from lempel_ziv_complexity import lempel_ziv_complexity
 
 warnings.simplefilter('ignore')
 
-path='/home/jeremy/anaconda3/matteo/'
-
+#path='/home/jeremy/anaconda3/matteo/'
+path='C:/Users/matte/OneDrive/Documenti/matteo/'
 #CREATING THE LIST OF SUBJECTS
 
 sound_list=['rest','music','speech']
@@ -98,7 +98,7 @@ for ch in total_channels_set:
 #PARAMETERS
 
 subject_list=subject_list
-min_sizes=np.arange(1,20,2)
+
 
 size_rest=[]
 size_speech=[]
@@ -124,10 +124,6 @@ rss_speech=[]
 rss_music=[]
 rss_rest=[]
 
-complexity_list_speech=[]
-complexity_list_music=[]
-complexity_list_rest=[]
-    
 for isub, subject in enumerate(subject_list):
 ## Load the data from the HDF fil
     print(subject, isub)
@@ -195,6 +191,8 @@ for isub, subject in enumerate(subject_list):
     final_channels_H[subject]=[ch for i, ch in enumerate(clean_chnames) if i not in ch_H_i]
     final_channels_all[subject]=clean_chnames
     
+    final_channels=clean_chnames
+    
     clean_music_H = np.delete(clean_music, ch_H_i, axis=0)
     clean_speech_H = np.delete(clean_speech, ch_H_i, axis=0)
     clean_rest_H = np.delete(clean_rest, ch_H_i, axis=0)
@@ -219,67 +217,13 @@ for isub, subject in enumerate(subject_list):
     music_data_av=zdata_music.copy()
     rest_data_av=zdata_rest.copy()
     
-    thres=np.percentile(zdata_rest, 99)
+    thres=2.8
     print(thres)
     
-    
-    
-    
-    for n in np.arange(15,16):
-        
-        avalanches_rest =av.go_avalanches(zdata_rest.T, thre=thres, direc=0, binsize=2)
-        indices15=np.argwhere(np.array(avalanches_rest['siz'])==n)
-        avalanches15=[]
-        
-        for i in indices15:
-            a0=avalanches_rest['ranges'][i[0]][0]
-            a1=avalanches_rest['ranges'][i[0]][1]
-            proj=np.sum(avalanches_rest['Zbin'][a0:a1,:], axis=0)
-            avalanches15.append(np.where(proj>0, 1, 0))
-            string=''.join([str(elem) for elem in avalanches_rest['Zbin'][a0:a1,:].T.flatten()])
-            complexity_list_rest.append(lempel_ziv_complexity(string))
-        
-        avalanches_speech=av.go_avalanches(zdata_speech.T, thre=thres, direc=0, binsize=2)
-
-        indices15=np.argwhere(np.array(avalanches_speech['siz'])==n)
-        avalanches15=[]
-        size_speech.append(avalanches_speech['siz'])
-    
-        for i in indices15:
-            a0=avalanches_speech['ranges'][i[0]][0]
-            a1=avalanches_speech['ranges'][i[0]][1]
-            proj=np.sum(avalanches_speech['Zbin'][a0:a1,:], axis=0)
-            avalanches15.append(np.where(proj>0, 1, 0))
-            string=''.join([str(elem) for elem in avalanches_speech['Zbin'][a0:a1,:].T.flatten()])
-            complexity_list_speech.append(lempel_ziv_complexity(string))
-        
-        avalanches_music =av.go_avalanches(zdata_music.T, thre=thres, direc=0, binsize=2)
-        size_music.append(avalanches_music['siz'])
-        
-        indices15=np.argwhere(np.array(avalanches_music['siz'])==n)
-        avalanches15=[]
-        for i in indices15:
-            a0=avalanches_music['ranges'][i[0]][0]
-            a1=avalanches_music['ranges'][i[0]][1]
-            proj=np.sum(avalanches_music['Zbin'][a0:a1,:], axis=0)
-            avalanches15.append(np.where(proj>0, 1, 0))
-            string=''.join([str(elem) for elem in avalanches_music['Zbin'][a0:a1,:].T.flatten()])
-            complexity_list_music.append(lempel_ziv_complexity(string))
-        
-        a=max(len(complexity_list_speech), len(complexity_list_music), len(complexity_list_rest))
-        y,x,_=plt.hist(stats.zscore(complexity_list_speech[:a]), 15, color="lightblue", label='LZC speech')
-        y1,x1,_=plt.hist(stats.zscore(complexity_list_music[:a]), 15, color="green", label='LZC music')
-        y2,x2,_=plt.hist(stats.zscore(complexity_list_rest[:a]), 15, color="red", label='LZC rest')
-        plt.legend()
-        plt.show()
-        plt.close()
-        
-        plt.plot(x[:-1],y, color="lightblue", label='LZC speech')
-        plt.plot(x1[:-1],y1, color="green", label='LZC music')
-        plt.plot(x2[:-1],y2, color="red", label='LZC rest')
-        plt.show()
-        plt.close()
-        
+    avalanches_rest=av.go_avalanches(zdata_rest.T, thre=thres, direc=0, binsize=2)
+    avalanches_speech=av.go_avalanches(zdata_speech.T, thre=thres, direc=0, binsize=2)
+    avalanches_music =av.go_avalanches(zdata_music.T, thre=thres, direc=0, binsize=2)
+       
 
     """
     y=np.arange(0,len(clean_chnames),2)
@@ -291,14 +235,6 @@ for isub, subject in enumerate(subject_list):
     plt.show()
     plt.close()
     
-    """
-    plt.figure(figsize=(15,13))
-    plt.imshow(np.corrcoef(np.array(avalanches15)), aspect='auto', interpolation='none')
-    plt.title('rest, after binarization, threshold='+str(thres))
-    plt.colorbar()
-    plt.show()
-    plt.close()
-    """
     #plotting the size distribution and fitting 
     size_rest.append(avalanches_rest['siz'])
     x,y,_=plt.hist(avalanches_rest['IAI'], 20)
@@ -316,11 +252,8 @@ for isub, subject in enumerate(subject_list):
     #FC_rest=np.zeros((n_regions,n_regions))
     #FC_rest[np.triu_indices(n_regions,1)]=fc_rest
     #FC_rest= FC_rest + FC_rest.T + np.identity(n_regions)
-    #fc_dict[subject]['rest']=FC_rest"""
-    
-    
-    
-"""
+    #fc_dict[subject]['rest']=FC_rest
+
     y=np.arange(0,len(clean_chnames),2)
     plt.figure(figsize=(15,13))
     plt.imshow(avalanches_speech['Zbin'].T[:,:1000], aspect='auto', interpolation='none', vmin=-0.3, vmax=0.3)
@@ -339,20 +272,6 @@ for isub, subject in enumerate(subject_list):
     #FC_speech= FC_speech + FC_speech.T + np.identity(n_regions)
     #fc_dict[subject]['speech']=FC_speech
     
-    
-     
-    
-       """ 
-    y=np.arange(0,len(clean_chnames),2)
-    plt.figure(figsize=(15,13))
-    plt.imshow(np.corrcoef(np.array(avalanches15)), aspect='auto', interpolation='none', vmin=-0.3, vmax=0.3)
-    plt.title('music, after binarization, threshold='+str(thres))
-    #plt.yticks(y, clean_chnames[::2])
-    plt.colorbar()
-    plt.show()
-    plt.close()
-    
-    
     #Ebin=fc.go_edge(avalanches_music['Zbin'])
     rss_music.append(np.sum(avalanches_music['Zbin'].T, axis=0))
     #fc_music=np.mean(Ebin, axis=0)
@@ -360,23 +279,25 @@ for isub, subject in enumerate(subject_list):
     #FC_music=np.zeros((n_regions,n_regions))
     #FC_music[np.triu_indices(n_regions,1)]=fc_music
     #FC_music= FC_music + FC_music.T + np.identity(n_regions)
-    #fc_dict[subject]['music']=FC_music
+    #fc_dict[subject]['music']=FC_music"""
     
     mean_iai_speech=[]
     mean_iai_music=[]
     mean_iai_rest=[]
+    min_sizes=np.arange(1,int(len(final_channels)/3),2)
+    y=np.arange(0,len(final_channels),2)
     
     for min_siz in min_sizes:
 
         mins_avalanches_speech=av.min_siz_filt(avalanches_speech, min_siz)
         
-        """plt.figure(figsize=(12,8))
-        plt.imshow(mins_avalanches_speech['Zbin'].T[:,:1000], aspect='auto', interpolation='none')
-        plt.yticks(y, clean_chnames[::2])
+        plt.figure(figsize=(12,8))
+        plt.imshow(mins_avalanches_speech['Zbin_reduced'].T[:,:1000], aspect='auto', interpolation='none')
+        plt.yticks(y, final_channels[::2])
         plt.title('speech, min_size='+str(min_siz))
         plt.colorbar()
         plt.show()
-        plt.close()"""
+        plt.close()
     
         mins_avalanches_music=av.min_siz_filt(avalanches_music, min_siz)
         
@@ -398,9 +319,9 @@ for isub, subject in enumerate(subject_list):
         plt.show()
         plt.close()"""
     
-        mean_iai_speech.append(np.mean(mins_avalanches_speech['IAI']))
-        mean_iai_music.append(np.mean(mins_avalanches_music['IAI']))
-        mean_iai_rest.append(np.mean(mins_avalanches_rest['IAI']))
+        mean_iai_speech.append(np.std(mins_avalanches_speech['IAI']))
+        mean_iai_music.append(np.std(mins_avalanches_music['IAI']))
+        mean_iai_rest.append(np.std(mins_avalanches_rest['IAI']))
         
     
     plt.plot(min_sizes, mean_iai_speech, label='speech')

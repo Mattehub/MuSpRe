@@ -1,11 +1,41 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Jun  2 09:53:00 2022
+
+@author: matte
+"""
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jun  1 15:23:02 2022
+Created on Wed Jun  1 14:17:51 2022
 
 @author: jeremy
 """
 
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu May  5 15:03:46 2022
+
+@author: jeremy
+"""
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Apr  8 17:49:55 2022
+
+@author: jeremy
+"""
+
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Mar 31 19:26:54 2022
+
+@author: jeremy
+"""
 
 import h5py
 import mne
@@ -21,8 +51,6 @@ import pickle
 import utils_avalanches as av
 import warnings 
 import Utils_FC as fc
-from sklearn.metrics import jaccard_score
-
 from lempel_ziv_complexity import lempel_ziv_complexity
 
 warnings.simplefilter('ignore')
@@ -107,15 +135,23 @@ final_channels_H={}
 
 final_channels_all={}
 
+a=0.05
+b=0.1
 rss_speech=[]
 rss_music=[]
 rss_rest=[]
+"""
+solo H avalanches, 
 
-jaccard_list={}
+Correlazione senza H, bisogna vedere un modo per tornare allo spazio.
+
+
+
+"""
+corr_dict={}
     
 for isub, subject in enumerate(subject_list):
-    jaccard_list[subject]=[]
-    fc_dict[subject]={}
+    corr_dict[subject]=[]
     
     #MUSIC
     with h5py.File(pjoin(path+'seeg_data_hgenv_down100_h5py/', subject + '_down100_seeg_preproc.hdf5'), 'r') as f:
@@ -170,9 +206,9 @@ for isub, subject in enumerate(subject_list):
     #clean_sp=clean2(clean_speech_H, N=3)
     #clean_re=clean2(clean_rest_H, N=3)
     
-    zdata_speech_art=stats.zscore(clean_speech_H, axis=1)
-    zdata_music_art=stats.zscore(clean_music_H, axis=1)
-    zdata_rest_art=stats.zscore(clean_rest_H, axis=1)
+    zdata_speech_art=stats.zscore(clean_speech, axis=1)
+    zdata_music_art=stats.zscore(clean_music, axis=1)
+    zdata_rest_art=stats.zscore(clean_rest, axis=1)
     
     zdata_speech=np.where(np.abs(zdata_speech_art)>7, 0, zdata_speech_art)
     zdata_music=np.where(np.abs(zdata_music_art)>7, 0, zdata_music_art)
@@ -188,29 +224,28 @@ for isub, subject in enumerate(subject_list):
     
     
     
-    for n in np.arange(int(len(zdata_rest)/3), int(len(zdata_rest)/2)):
+    for n in np.arange(30,31):
         
-        jaccard_list_speech=[]
-        jaccard_list_music=[]
-        jaccard_list_rest=[]
+        corr_list_speech=[]
+        corr_list_music=[]
+        corr_list_rest=[]
         
         avalanches_rest =av.go_avalanches(zdata_rest.T, thre=thres, direc=0, binsize=2)
+        
         indices15=np.argwhere(np.array(avalanches_rest['siz'])==n)
         avalanches15=[]
         
         for i in indices15:
             a0=avalanches_rest['ranges'][i[0]][0]
             a1=avalanches_rest['ranges'][i[0]][1]
-            proj=np.sum(avalanches_rest['Zbin'][a0:a1,:], axis=0)
-            avalanches15.append(np.where(proj>0, 1, 0))
-            jaccard_l=[]
-            for j in np.arange(a0,a1-1):
-                jaccard_l.append(jaccard_score(avalanches_rest['Zbin'][j,:], avalanches_rest['Zbin'][j+1,:]))
-                
-                
-            jaccard_list_rest.append(np.mean(jaccard_l))
-        
-        plt.plot()
+            corr_matrix=np.corrcoef(avalanches_rest['Zbin'][a0:a1,:])
+            corr_list_rest.append(np.mean(np.triu(corr_matrix, 1)))
+            plt.imshow(corr_matrix, aspect='auto', interpolation='none', vmin=-a, vmax=b)
+            plt.colorbar()
+            plt.title('rest')
+            plt.show()
+            plt.close()
+            
         avalanches_speech=av.go_avalanches(zdata_speech.T, thre=thres, direc=0, binsize=2)
 
         indices15=np.argwhere(np.array(avalanches_speech['siz'])==n)
@@ -220,15 +255,14 @@ for isub, subject in enumerate(subject_list):
         for i in indices15:
             a0=avalanches_speech['ranges'][i[0]][0]
             a1=avalanches_speech['ranges'][i[0]][1]
-            proj=np.sum(avalanches_speech['Zbin'][a0:a1,:], axis=0)
-            avalanches15.append(np.where(proj>0, 1, 0))
-            jaccard_l=[]
-            for j in np.arange(a0,a1-1):
-                jaccard_l.append(jaccard_score(avalanches_speech['Zbin'][j,:], avalanches_speech['Zbin'][j+1,:]))
-                
-                
-            jaccard_list_speech.append(np.mean(jaccard_l))
-        
+            corr_matrix=np.corrcoef(avalanches_speech['Zbin'][a0:a1,:])
+            corr_list_speech.append(np.mean(np.triu(corr_matrix, 1)))
+            plt.imshow(corr_matrix, aspect='auto', interpolation='none', vmin=-a, vmax=b)
+            plt.colorbar()
+            plt.title('speech')
+            plt.show()
+            plt.close()
+            
         avalanches_music =av.go_avalanches(zdata_music.T, thre=thres, direc=0, binsize=2)
         size_music.append(avalanches_music['siz'])
         
@@ -237,18 +271,15 @@ for isub, subject in enumerate(subject_list):
         for i in indices15:
             a0=avalanches_music['ranges'][i[0]][0]
             a1=avalanches_music['ranges'][i[0]][1]
-            proj=np.sum(avalanches_music['Zbin'][a0:a1,:], axis=0)
-            avalanches15.append(np.where(proj>0, 1, 0))
-            jaccard_l=[]
-            for j in np.arange(a0,a1-1):
-                jaccard_l.append(jaccard_score(avalanches_music['Zbin'][j,:], avalanches_music['Zbin'][j+1,:]))
-                
-                
-            jaccard_list_music.append(np.nanmean(jaccard_l))
-        
-        
-        jaccard_list[subject].append([np.nanmean(jaccard_list_rest), np.nanmean(jaccard_list_music), np.nanmean(jaccard_list_speech)])
-        
+            corr_matrix=np.corrcoef(avalanches_music['Zbin'][a0:a1,:])
+            corr_list_music.append(np.mean(np.triu(corr_matrix, 1)))
+            plt.imshow(corr_matrix, aspect='auto', interpolation='none', vmin=-a, vmax=b)
+            plt.colorbar()
+            plt.title('music')
+            plt.show()
+            plt.close()
+            
+        corr_dict[subject].append([np.nanmean(corr_list_rest), np.nanmean(corr_list_music), np.nanmean(corr_list_speech)])
         """
         a=max(len(complexity_list_speech), len(complexity_list_music), len(complexity_list_rest))
         y,x,_=plt.hist(stats.zscore(complexity_list_speech[:a]), 15, color="lightblue", label='LZC speech')
@@ -265,16 +296,19 @@ for isub, subject in enumerate(subject_list):
         plt.close()"""
  
 for subject in subject_list:
-    plt.plot(np.nanmean(np.array(jaccard_list[subject]), axis=0))
-plt.title('jaccard index')
+    plt.plot(np.nanmean(np.array(corr_dict[subject]), axis=0))
+plt.title('corr, within avalanches')
 plt.xticks(np.arange(3), ['rest', 'music', 'speech'], rotation=90)
 plt.show()
 plt.close()       
    
 
-plt.hist(jaccard_list_rest, 30, color="red", label='jaccard rest')
-plt.hist(jaccard_list_speech, 30, color="lightblue", label='jaccard speech')
-plt.hist(jaccard_list_music, 30, color="green", label='jaccard music')
+plt.hist(corr_list_rest, 30, color="red", label='rest')
+plt.hist(corr_list_speech, 30, color="lightblue", label='speech')
+plt.hist(corr_list_music, 30, color="green", label='music')
+plt.title("corr within avalanches distribution")
 plt.legend()
 plt.show()
 plt.close()
+
+

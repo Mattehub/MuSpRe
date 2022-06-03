@@ -48,7 +48,8 @@ from lempel_ziv_complexity import lempel_ziv_complexity
 
 warnings.simplefilter('ignore')
 
-path='/home/jeremy/anaconda3/matteo/'
+#path='/home/jeremy/anaconda3/matteo/'
+path='C:/Users/matte/OneDrive/Documenti/matteo/'
 
 #CREATING THE LIST OF SUBJECTS
 
@@ -128,9 +129,7 @@ final_channels_H={}
 
 final_channels_all={}
 
-rss_speech=[]
-rss_music=[]
-rss_rest=[]
+
 
 complexity_list_speech=[]
 complexity_list_music=[]
@@ -143,6 +142,11 @@ corr_music=[]
 corr_rest=[]
     
 for n in range(simulations):
+    
+    rss_speech=[]
+    rss_music=[]
+    rss_rest=[]
+    
     for isub, subject in enumerate(subject_list):
         ## Load the data from the HDF fil
         fc_dict[subject]={}
@@ -180,19 +184,14 @@ for n in range(simulations):
             chnames = f['chnames'][...].astype('U')
             
             at=f['atlasses']['Brainnetome'][...]
-            print(at)
+        
             listR=[a[:13] for a in at]
-            print(listR)
             list_goodR=np.delete(listR, ch_i)
-            print(list_goodR)
             setR=set(list_goodR)
-            print(setR)
             good_indices=[]
             
             for i in setR:
                 indices=[j for j, r in enumerate(list_goodR) if r==i]
-                print(indices)
-                print(np.random.choice(indices))
                 good_indices.append(np.random.choice(indices))
                 
             
@@ -232,9 +231,9 @@ for n in range(simulations):
             zdata_music_art=stats.zscore(clean_music)
             zdata_rest_art=stats.zscore(clean_rest)
             
-            zdata_speech=np.where(np.abs(zdata_speech_art)>7, 1, zdata_speech_art)
-            zdata_music=np.where(np.abs(zdata_music_art)>7, 1, zdata_music_art)
-            zdata_rest=np.where(np.abs(zdata_rest_art)>7, 1, zdata_rest_art)
+            zdata_speech=np.where(np.abs(zdata_speech_art)>7, 0, zdata_speech_art)
+            zdata_music=np.where(np.abs(zdata_music_art)>7,0, zdata_music_art)
+            zdata_rest=np.where(np.abs(zdata_rest_art)>7, 0, zdata_rest_art)
         
         speech_data_av=zdata_speech.copy()
         music_data_av=zdata_music.copy()
@@ -264,11 +263,18 @@ for n in range(simulations):
     corr_matrix_speech=np.corrcoef(np.array(rss_speech))
     
     corr_speech.append(np.mean(np.triu(corr_matrix_speech, 1)))
+    
     corr_music.append(np.mean(np.triu(corr_matrix_music, 1)))
+    
     corr_rest.append(np.mean(np.triu(corr_matrix_rest, 1)))
     print('done simulation', n)
 
 #DOING A SCRAMBLING, SHIFTING THE RSS ON TIME
+
+list_mean_corr_speech=[]
+list_mean_corr_music=[]
+list_mean_corr_rest=[]
+
 num_sim=200
 for i in range(num_sim):
     

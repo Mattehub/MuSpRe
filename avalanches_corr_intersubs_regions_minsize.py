@@ -22,7 +22,8 @@ from lempel_ziv_complexity import lempel_ziv_complexity
 
 warnings.simplefilter('ignore')
 
-path='/home/jeremy/anaconda3/matteo/'
+#path='/home/jeremy/anaconda3/matteo/'
+path='C:/Users/matte/OneDrive/Documenti/matteo/'
 
 #CREATING THE LIST OF SUBJECTS
 
@@ -189,9 +190,9 @@ for isub, subject in enumerate(subject_list):
     #clean_sp=clean2(clean_speech_H, N=3)
     #clean_re=clean2(clean_rest_H, N=3)
     
-    zdata_speech_art=stats.zscore(clean_speech, axis=1)
-    zdata_music_art=stats.zscore(clean_music, axis=1)
-    zdata_rest_art=stats.zscore(clean_rest, axis=1)
+    zdata_speech_art=stats.zscore(clean_speech_without_H, axis=1)
+    zdata_music_art=stats.zscore(clean_music_without_H, axis=1)
+    zdata_rest_art=stats.zscore(clean_rest_without_H, axis=1)
     
     zdata_speech=np.where(np.abs(zdata_speech_art)>7, 0, zdata_speech_art)
     zdata_music=np.where(np.abs(zdata_music_art)>7, 0, zdata_music_art)
@@ -212,7 +213,7 @@ for isub, subject in enumerate(subject_list):
     
     
     
-    min_siz=int(len(zdata_rest)/1.7)
+    min_siz=int(len(zdata_rest)/4)
     
     mins_size_speech=av.min_siz_filt(avalanches_speech, min_siz)
     
@@ -228,15 +229,15 @@ for isub, subject in enumerate(subject_list):
     rss_music.append(np.sum(mins_size_music['Zbin_reduced'].T, axis=0))
     
     #plotting a visualization of the avalanches
-    y=np.arange(0,len(clean_chnames),2)
+    y=np.arange(0,len(final_channels_without_H[subject]),2)
     plt.figure(figsize=(15,13))
     plt.imshow(mins_size_speech['Zbin_reduced'].T, aspect='auto', interpolation='none', vmin=-0.3, vmax=0.3)
-    plt.yticks(y, clean_chnames[::2])
+    plt.yticks(y, final_channels_without_H[subject][::2])
     plt.title('rest, after binarization, threshold='+str(thres))
     plt.colorbar()
     plt.show()
     plt.close()
-    
+    """
     plt.figure(figsize=(15,13))
     plt.imshow(mins_size_music['Zbin_reduced'].T, aspect='auto', interpolation='none', vmin=-0.3, vmax=0.3)
     plt.title('speech, after binarization, threshold='+str(thres))
@@ -252,7 +253,7 @@ for isub, subject in enumerate(subject_list):
     plt.colorbar()
     plt.show()
     plt.close()
-    
+    """
 #plotting the rss
 a=-3
 b=3

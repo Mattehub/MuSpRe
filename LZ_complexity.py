@@ -48,8 +48,8 @@ from lempel_ziv_complexity import lempel_ziv_complexity
 
 warnings.simplefilter('ignore')
 
-path='/home/jeremy/anaconda3/matteo/'
-
+#path='/home/jeremy/anaconda3/matteo/'
+path='C:/Users/matte/OneDrive/Documenti/matteo/'
 #CREATING THE LIST OF SUBJECTS
 
 sound_list=['rest','music','speech']
@@ -191,9 +191,9 @@ for isub, subject in enumerate(subject_list):
     #clean_sp=clean2(clean_speech_H, N=3)
     #clean_re=clean2(clean_rest_H, N=3)
     
-    zdata_speech_art=stats.zscore(clean_speech, axis=1)
-    zdata_music_art=stats.zscore(clean_music, axis=1)
-    zdata_rest_art=stats.zscore(clean_rest, axis=1)
+    zdata_speech_art=stats.zscore(clean_speech_H, axis=1)
+    zdata_music_art=stats.zscore(clean_music_H, axis=1)
+    zdata_rest_art=stats.zscore(clean_rest_H, axis=1)
     
     zdata_speech=np.where(np.abs(zdata_speech_art)>7, 0, zdata_speech_art)
     zdata_music=np.where(np.abs(zdata_music_art)>7, 0, zdata_music_art)
@@ -209,13 +209,14 @@ for isub, subject in enumerate(subject_list):
     
     
     
-    for n in np.arange():
+    for n in np.arange(int(len(zdata_rest)/3), int(len(zdata_rest)/2)):
         
         complexity_list_speech=[]
         complexity_list_music=[]
         complexity_list_rest=[]
         
         avalanches_rest =av.go_avalanches(zdata_rest.T, thre=thres, direc=0, binsize=2)
+        
         indices15=np.argwhere(np.array(avalanches_rest['siz'])==n)
         avalanches15=[]
         
@@ -254,7 +255,7 @@ for isub, subject in enumerate(subject_list):
             string=''.join([str(elem) for elem in avalanches_music['Zbin'][a0:a1,:].T.flatten()])
             complexity_list_music.append(lempel_ziv_complexity(string))
         
-        complexity_list[subject].append([np.mean(complexity_list_rest), np.mean(complexity_list_music), np.mean(complexity_list_speech)])
+        complexity_list[subject].append([np.nanmean(complexity_list_rest), np.nanmean(complexity_list_music), np.nanmean(complexity_list_speech)])
         """
         a=max(len(complexity_list_speech), len(complexity_list_music), len(complexity_list_rest))
         y,x,_=plt.hist(stats.zscore(complexity_list_speech[:a]), 15, color="lightblue", label='LZC speech')
@@ -271,7 +272,7 @@ for isub, subject in enumerate(subject_list):
         plt.close()"""
  
 for subject in subject_list:
-    plt.plot(np.mean(np.array(complexity_list[subject]), axis=0))
+    plt.plot(np.nanmean(np.array(complexity_list[subject]), axis=0))
 plt.title('LZ complexity')
 plt.xticks(np.arange(3), ['rest', 'music', 'speech'], rotation=90)
 plt.show()
