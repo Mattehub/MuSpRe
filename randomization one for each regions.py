@@ -48,8 +48,8 @@ from lempel_ziv_complexity import lempel_ziv_complexity
 
 warnings.simplefilter('ignore')
 
-#path='/home/jeremy/anaconda3/matteo/'
-path='C:/Users/matte/OneDrive/Documenti/matteo/'
+path='/home/jeremy/anaconda3/matteo/'
+#path='C:/Users/matte/OneDrive/Documenti/matteo/'
 
 #CREATING THE LIST OF SUBJECTS
 

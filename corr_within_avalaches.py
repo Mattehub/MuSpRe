@@ -55,8 +55,8 @@ from lempel_ziv_complexity import lempel_ziv_complexity
 
 warnings.simplefilter('ignore')
 
-#path='/home/jeremy/anaconda3/matteo/'
-path='C:/Users/matte/OneDrive/Documenti/matteo/'
+path='/home/jeremy/anaconda3/matteo/'
+#path='C:/Users/matte/OneDrive/Documenti/matteo/'
 #CREATING THE LIST OF SUBJECTS
 
 sound_list=['rest','music','speech']
@@ -148,7 +148,9 @@ Correlazione senza H, bisogna vedere un modo per tornare allo spazio.
 
 
 """
-corr_dict={}
+corr_dict_speech={}
+corr_dict_rest={}
+corr_dict_music={}
     
 for isub, subject in enumerate(subject_list):
     corr_dict[subject]=[]
@@ -223,8 +225,13 @@ for isub, subject in enumerate(subject_list):
     
     
     
+    corr_dict_speech[subject]=[]
     
-    for n in np.arange(30,31):
+    corr_dict_rest[subject]=[]
+    
+    corr_dict_music[subject]=[]
+    
+    for n in np.arange(10,20):
         
         corr_list_speech=[]
         corr_list_music=[]
@@ -240,11 +247,11 @@ for isub, subject in enumerate(subject_list):
             a1=avalanches_rest['ranges'][i[0]][1]
             corr_matrix=np.corrcoef(avalanches_rest['Zbin'][a0:a1,:])
             corr_list_rest.append(np.mean(np.triu(corr_matrix, 1)))
-            plt.imshow(corr_matrix, aspect='auto', interpolation='none', vmin=-a, vmax=b)
+            """plt.imshow(corr_matrix, aspect='auto', interpolation='none', vmin=-a, vmax=b)
             plt.colorbar()
             plt.title('rest')
             plt.show()
-            plt.close()
+            plt.close()"""
             
         avalanches_speech=av.go_avalanches(zdata_speech.T, thre=thres, direc=0, binsize=2)
 
@@ -257,12 +264,12 @@ for isub, subject in enumerate(subject_list):
             a1=avalanches_speech['ranges'][i[0]][1]
             corr_matrix=np.corrcoef(avalanches_speech['Zbin'][a0:a1,:])
             corr_list_speech.append(np.mean(np.triu(corr_matrix, 1)))
-            plt.imshow(corr_matrix, aspect='auto', interpolation='none', vmin=-a, vmax=b)
+            """plt.imshow(corr_matrix, aspect='auto', interpolation='none', vmin=-a, vmax=b)
             plt.colorbar()
             plt.title('speech')
             plt.show()
             plt.close()
-            
+            """
         avalanches_music =av.go_avalanches(zdata_music.T, thre=thres, direc=0, binsize=2)
         size_music.append(avalanches_music['siz'])
         
@@ -273,13 +280,18 @@ for isub, subject in enumerate(subject_list):
             a1=avalanches_music['ranges'][i[0]][1]
             corr_matrix=np.corrcoef(avalanches_music['Zbin'][a0:a1,:])
             corr_list_music.append(np.mean(np.triu(corr_matrix, 1)))
-            plt.imshow(corr_matrix, aspect='auto', interpolation='none', vmin=-a, vmax=b)
+            """plt.imshow(corr_matrix, aspect='auto', interpolation='none', vmin=-a, vmax=b)
             plt.colorbar()
             plt.title('music')
             plt.show()
-            plt.close()
+            plt.close()"""
             
-        corr_dict[subject].append([np.nanmean(corr_list_rest), np.nanmean(corr_list_music), np.nanmean(corr_list_speech)])
+        corr_dict_speech[subject].append(np.nanmean(corr_list_speech))
+        
+        corr_dict_rest[subject].append(np.nanmean(corr_list_rest))
+        
+        corr_dict_music[subject].append(np.nanmean(corr_list_music))
+ 
         """
         a=max(len(complexity_list_speech), len(complexity_list_music), len(complexity_list_rest))
         y,x,_=plt.hist(stats.zscore(complexity_list_speech[:a]), 15, color="lightblue", label='LZC speech')
@@ -293,15 +305,41 @@ for isub, subject in enumerate(subject_list):
         plt.plot(x1[:-1],y1, color="green", label='LZC music')
         plt.plot(x2[:-1],y2, color="red", label='LZC rest')
         plt.show()
-        plt.close()"""
+        plt.close()
  
 for subject in subject_list:
-    plt.plot(np.nanmean(np.array(corr_dict[subject]), axis=0))
+    plt.plot(corr_dict[subject])
 plt.title('corr, within avalanches')
 plt.xticks(np.arange(3), ['rest', 'music', 'speech'], rotation=90)
 plt.show()
-plt.close()       
-   
+plt.close()  """     
+  
+for subject in subject_list:
+    plt.plot(corr_dict_rest[subject])
+    plt.plot(corr_dict_music[subject])
+    plt.plot(corr_dict_speech[subject])
+    plt.title('corr, within avalanches rest')
+    plt.show()
+    plt.close()  
+
+
+for subject in subject_list:
+    plt.plot(corr_dict_rest[subject])
+plt.title('corr, within avalanches rest')
+plt.show()
+plt.close()  
+ 
+for subject in subject_list:
+    plt.plot(corr_dict_music[subject])
+plt.title('corr, within avalanches music')
+plt.show()
+plt.close()   
+
+for subject in subject_list:
+    plt.plot(corr_dict_speech[subject])
+plt.title('corr, within avalanches speech')
+plt.show()
+plt.close()   
 
 plt.hist(corr_list_rest, 30, color="red", label='rest')
 plt.hist(corr_list_speech, 30, color="lightblue", label='speech')

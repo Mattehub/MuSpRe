@@ -1,6 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Jun  3 12:52:01 2022
 
-
-
+@author: jeremy
+"""
 
 
 
@@ -190,9 +194,9 @@ for isub, subject in enumerate(subject_list):
     #clean_sp=clean2(clean_speech_H, N=3)
     #clean_re=clean2(clean_rest_H, N=3)
     
-    zdata_speech_art=stats.zscore(clean_speech_without_H, axis=1)
-    zdata_music_art=stats.zscore(clean_music_without_H, axis=1)
-    zdata_rest_art=stats.zscore(clean_rest_without_H, axis=1)
+    zdata_speech_art=stats.zscore(clean_speech_without_H , axis=1)
+    zdata_music_art=stats.zscore(clean_music_without_H , axis=1)
+    zdata_rest_art=stats.zscore(clean_rest_without_H , axis=1)
     
     zdata_speech=np.where(np.abs(zdata_speech_art)>7, 0, zdata_speech_art)
     zdata_music=np.where(np.abs(zdata_music_art)>7, 0, zdata_music_art)
@@ -221,17 +225,24 @@ for isub, subject in enumerate(subject_list):
     
     mins_size_rest=av.min_siz_filt(avalanches_rest, min_siz)
     
-    #comuting the sum of all the activities at each instant of time
-    rss_rest.append(np.sum(mins_size_rest['Zbin_reduced'].T, axis=0))
+    #WITHOUT BIG SIZES
     
-    rss_speech.append(np.sum(mins_size_speech['Zbin_reduced'].T, axis=0))
+    avarest_without_big_av= avalanches_rest['Zbin'].T-mins_size_rest['Zbin_reduced'].T
+    avaspeech_without_big_av= avalanches_speech['Zbin'].T-mins_size_speech['Zbin_reduced'].T
+    avamusic_without_big_av= avalanches_music['Zbin'].T-mins_size_music['Zbin_reduced'].T
+
+    
+    #comuting the sum of all the activities at each instant of time
+    rss_rest.append(np.sum(avarest_without_big_av, axis=0))
+    
+    rss_speech.append(np.sum(avaspeech_without_big_av, axis=0))
   
-    rss_music.append(np.sum(mins_size_music['Zbin_reduced'].T, axis=0))
+    rss_music.append(np.sum(avamusic_without_big_av, axis=0))
     
     #plotting a visualization of the avalanches
     y=np.arange(0,len(final_channels_without_H[subject]),2)
     plt.figure(figsize=(15,13))
-    plt.imshow(mins_size_speech['Zbin_reduced'].T, aspect='auto', interpolation='none', vmin=-0.3, vmax=0.3)
+    plt.imshow(avaspeech_without_big_av, aspect='auto', interpolation='none', vmin=-0.3, vmax=0.3)
     plt.yticks(y, final_channels_without_H[subject][::2])
     plt.title('rest, after binarization, threshold='+str(thres))
     plt.colorbar()
@@ -352,5 +363,5 @@ plt.title('rest')
 plt.legend()
 plt.show()
 plt.close()
-    
-    
+
+

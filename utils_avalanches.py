@@ -274,7 +274,6 @@ def min_siz_filt(avalanches, min_siz):
             dur.append(avalanches['dur'][i])
             siz.append(avalanches['siz'][i])
             ranges.append(avalanches['ranges'][i])
-    
     Zbin_reduced[:ranges[0][0],:]=0    
     Zbin_reduced[ranges[-1][1]:,:]=0
     for t in range(len(ranges)-1):
