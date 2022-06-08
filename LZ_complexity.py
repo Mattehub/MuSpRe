@@ -48,8 +48,8 @@ from lempel_ziv_complexity import lempel_ziv_complexity
 
 warnings.simplefilter('ignore')
 
-#path='/home/jeremy/anaconda3/matteo/'
-path='C:/Users/matte/OneDrive/Documenti/matteo/'
+path='/home/jeremy/anaconda3/matteo/'
+#path='C:/Users/matte/OneDrive/Documenti/matteo/'
 #CREATING THE LIST OF SUBJECTS
 
 sound_list=['rest','music','speech']
@@ -195,9 +195,9 @@ for isub, subject in enumerate(subject_list):
     zdata_music_art=stats.zscore(clean_music_H, axis=1)
     zdata_rest_art=stats.zscore(clean_rest_H, axis=1)
     
-    zdata_speech=np.where(np.abs(zdata_speech_art)>7, 0, zdata_speech_art)
-    zdata_music=np.where(np.abs(zdata_music_art)>7, 0, zdata_music_art)
-    zdata_rest=np.where(np.abs(zdata_rest_art)>7, 0, zdata_rest_art)
+    zdata_speech=np.where(np.abs(zdata_speech_art)>5, 0, zdata_speech_art)
+    zdata_music=np.where(np.abs(zdata_music_art)>5, 0, zdata_music_art)
+    zdata_rest=np.where(np.abs(zdata_rest_art)>5, 0, zdata_rest_art)
     
     speech_data_av=zdata_speech.copy()
     music_data_av=zdata_music.copy()

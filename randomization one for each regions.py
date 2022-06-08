@@ -187,10 +187,11 @@ for n in range(simulations):
         
             listR=[a[:13] for a in at]
             list_goodR=np.delete(listR, ch_i)
-            setR=set(list_goodR)
+            setR=list(dict.fromkeys(list_goodR))
             good_indices=[]
             
             for i in setR:
+                
                 indices=[j for j, r in enumerate(list_goodR) if r==i]
                 good_indices.append(np.random.choice(indices))
                 
@@ -203,9 +204,9 @@ for n in range(simulations):
             clean_speech = np.delete(data_s, ch_i, axis=0)
             clean_rest = np.delete(data_r, ch_i, axis=0)
         
-            clean_music = np.delete(clean_music, ch_i_sim, axis=0)
-            clean_speech = np.delete(clean_speech, ch_i_sim, axis=0)
-            clean_rest = np.delete(clean_rest, ch_i_sim, axis=0)
+            clean_music_sim = np.delete(clean_music, ch_i_sim, axis=0)
+            clean_speech_sim = np.delete(clean_speech, ch_i_sim, axis=0)
+            clean_rest_sim = np.delete(clean_rest, ch_i_sim, axis=0)
             
             #selecting only the channels we want, in this script H
             ch_H_i= [i for i, ch in enumerate(clean_chnames_sim) if ch not in ch_H]
@@ -227,36 +228,64 @@ for n in range(simulations):
             #clean_sp=clean2(clean_speech_H, N=3)
             #clean_re=clean2(clean_rest_H, N=3)
             
-            zdata_speech_art=stats.zscore(clean_speech)
-            zdata_music_art=stats.zscore(clean_music)
-            zdata_rest_art=stats.zscore(clean_rest)
+            """zdata_speech_art=stats.zscore(clean_speech, axis=1)
+            zdata_music_art=stats.zscore(clean_music, axis=1)
+            zdata_rest_art=stats.zscore(clean_rest, axis=1)"""
             
-            zdata_speech=np.where(np.abs(zdata_speech_art)>7, 0, zdata_speech_art)
+            zdata_speech_art_sim=stats.zscore(clean_speech_sim, axis=1)
+            zdata_music_art_sim=stats.zscore(clean_music_sim, axis=1)
+            zdata_rest_art_sim=stats.zscore(clean_rest_sim, axis=1)
+            
+            """zdata_speech=np.where(np.abs(zdata_speech_art)>7, 0, zdata_speech_art)
             zdata_music=np.where(np.abs(zdata_music_art)>7,0, zdata_music_art)
-            zdata_rest=np.where(np.abs(zdata_rest_art)>7, 0, zdata_rest_art)
+            zdata_rest=np.where(np.abs(zdata_rest_art)>7, 0, zdata_rest_art)"""
+            
+            zdata_speech_sim=np.where(np.abs(zdata_speech_art_sim)>7, 0, zdata_speech_art_sim)
+            zdata_music_sim=np.where(np.abs(zdata_music_art_sim)>7,0, zdata_music_art_sim)
+            zdata_rest_sim=np.where(np.abs(zdata_rest_art_sim)>7, 0, zdata_rest_art_sim)
         
-        speech_data_av=zdata_speech.copy()
-        music_data_av=zdata_music.copy()
-        rest_data_av=zdata_rest.copy()
+        """speech_data_av=zdata_speech_sim.copy()
+        music_data_av=zdata_music_sim.copy()
+        rest_data_av=zdata_rest_sim.copy()"""
         
-        thres=np.percentile(zdata_rest, 99)
+        thres=np.percentile(zdata_rest_sim, 99)
         if n==0:
             print(thres)
         
         #CREATING THE AVANLANCHES DICTIONARIES
         
-        avalanches_rest =av.go_avalanches(zdata_rest.T, thre=thres, direc=0, binsize=2)
+        """avalanches_rest =av.go_avalanches(zdata_rest.T, thre=thres, direc=0, binsize=2)
         avalanches_speech=av.go_avalanches(zdata_speech.T, thre=thres, direc=0, binsize=2)
-        avalanches_music =av.go_avalanches(zdata_music.T, thre=thres, direc=0, binsize=2)
-
+        avalanches_music =av.go_avalanches(zdata_music.T, thre=thres, direc=0, binsize=2)"""
+        
+        avalanches_rest_sim =av.go_avalanches(zdata_rest_sim.T, thre=thres, direc=0, binsize=2)
+        avalanches_speech_sim=av.go_avalanches(zdata_speech_sim.T, thre=thres, direc=0, binsize=2)
+        avalanches_music_sim =av.go_avalanches(zdata_music_sim.T, thre=thres, direc=0, binsize=2)
+        
+        """plt.figure(figsize=(15,30))
+        plt.imshow(avalanches_rest['Zbin'].T, aspect='auto', interpolation='none')
+        plt.yticks(range(len(list_goodR)), list_goodR)
+        plt.show()
+        plt.close()
+        
+        plt.figure(figsize=(15,30))
+        plt.imshow(avalanches_rest_sim['Zbin'].T, aspect='auto', interpolation='none')
+        plt.yticks(range(len(setR)), setR)
+        plt.show()
+        plt.close()"""
+        
         #comuting the sum of all the activities at each instant of time
-        rss_rest.append(np.sum(avalanches_rest['Zbin'].T, axis=0))
+        rss_rest.append(np.sum(avalanches_rest_sim['Zbin'].T, axis=0))
         
-        rss_speech.append(np.sum(avalanches_speech['Zbin'].T, axis=0))
+        rss_speech.append(np.sum(avalanches_speech_sim['Zbin'].T, axis=0))
         
-        rss_music.append(np.sum(avalanches_music['Zbin'].T, axis=0))
+        rss_music.append(np.sum(avalanches_music_sim['Zbin'].T, axis=0))
     
     corr_matrix_rest=np.corrcoef(np.array(rss_rest))
+    
+    plt.imshow(corr_matrix_rest, aspect='auto')
+    plt.show()
+    plt.close()
     
     corr_matrix_music=np.corrcoef(np.array(rss_music))
     
@@ -290,14 +319,14 @@ for i in range(num_sim):
 #PLOTTING THE RESULT, COMPARISON BETWEEN THE RANDOMIZATION AND THE DATA
 plt.hist(list_mean_corr_speech, label='random shift', color="blue")
 plt.hist(corr_speech, label="our data", color="red")
-plt.title('music')
+plt.title('speech')
 plt.legend()
 plt.show()
 plt.close()
 
 plt.hist(list_mean_corr_music, label='random shift', color="blue")
 plt.hist(corr_music, label="our data", color="red")
-plt.title('speech')
+plt.title('music')
 plt.legend()
 plt.show()
 plt.close()

@@ -40,8 +40,8 @@ from lempel_ziv_complexity import lempel_ziv_complexity
 
 warnings.simplefilter('ignore')
 
-#path='/home/jeremy/anaconda3/matteo/'
-path='C:/Users/matte/OneDrive/Documenti/matteo/'
+path='/home/jeremy/anaconda3/matteo/'
+#path='C:/Users/matte/OneDrive/Documenti/matteo/'
 #CREATING THE LIST OF SUBJECTS
 
 sound_list=['rest','music','speech']
@@ -123,6 +123,10 @@ final_channels_all={}
 rss_speech=[]
 rss_music=[]
 rss_rest=[]
+
+parameter_rest=[]
+parameter_music=[]
+parameter_speech=[]
 
 for isub, subject in enumerate(subject_list):
 ## Load the data from the HDF fil
@@ -287,20 +291,38 @@ for isub, subject in enumerate(subject_list):
     min_sizes=np.arange(1,int(len(final_channels)/3),2)
     y=np.arange(0,len(final_channels),2)
     
+    speech_IAI=[]
+    music_IAI=[]
+    rest_IAI=[]
+    
+    
     for min_siz in min_sizes:
 
         mins_avalanches_speech=av.min_siz_filt(avalanches_speech, min_siz)
         
-        plt.figure(figsize=(12,8))
+        if speech_IAI==[]:
+            speech_IAI=np.array(mins_avalanches_speech["IAI"])
+        else:
+            speech_IAI=np.concatenate((speech_IAI, np.array(mins_avalanches_speech["IAI"])))
+            
+        """plt.figure(figsize=(12,8))
         plt.imshow(mins_avalanches_speech['Zbin_reduced'].T[:,:1000], aspect='auto', interpolation='none')
         plt.yticks(y, final_channels[::2])
         plt.title('speech, min_size='+str(min_siz))
         plt.colorbar()
         plt.show()
-        plt.close()
-    
+        plt.close()"""
+        
+        #x0, y0,_= plt.hist(mins_avalanches_speech["IAI"], 50, label="speech")
+        
         mins_avalanches_music=av.min_siz_filt(avalanches_music, min_siz)
         
+        if music_IAI==[]:
+            music_IAI=np.array(mins_avalanches_music["IAI"])
+        else:
+            music_IAI=np.concatenate((music_IAI, np.array(mins_avalanches_music["IAI"])))
+            
+        #x1, y1,_=plt.hist(mins_avalanches_music["IAI"], 50, label="music")
         """plt.figure(figsize=(12,8))
         plt.imshow(mins_avalanches_music['Zbin'].T[:,:1000], aspect='auto', interpolation='none')
         plt.yticks(y, clean_chnames[::2])
@@ -311,6 +333,13 @@ for isub, subject in enumerate(subject_list):
     
         mins_avalanches_rest=av.min_siz_filt(avalanches_rest, min_siz)
         
+        if rest_IAI==[]:
+            rest_IAI=np.array(mins_avalanches_rest["IAI"])
+        else:
+            rest_IAI=np.concatenate((rest_IAI, np.array(mins_avalanches_rest["IAI"])))
+            
+        #x2, y2,_=plt.hist(mins_avalanches_rest["IAI"], 50, label="rest")
+        
         """plt.figure(figsize=(12,8))
         plt.imshow(mins_avalanches_rest['Zbin'].T[:,:1000], aspect='auto', interpolation='none')
         plt.yticks(y, clean_chnames[::2])
@@ -318,12 +347,77 @@ for isub, subject in enumerate(subject_list):
         plt.colorbar()
         plt.show()
         plt.close()"""
-    
-        mean_iai_speech.append(np.std(mins_avalanches_speech['IAI']))
-        mean_iai_music.append(np.std(mins_avalanches_music['IAI']))
-        mean_iai_rest.append(np.std(mins_avalanches_rest['IAI']))
         
+        """plt.legend()
+        plt.title("IAI distributions"+ subject+"size"+str(min_siz))
+        plt.show()
+        plt.close()
+        
+        plt.plot(x0, y0[:-1], label="speech")
+        plt.plot(x1, y1[:-1], label="music")
+        plt.plot(x2, y2[:-1], label="rest")
+        plt.legend()
+        plt.title("IAI distributions "+ subject+"  size = "+str(min_siz))
+        plt.show()
+        plt.close()
+        
+        plt.loglog(x0, y0[:-1], label="speech")
+        plt.loglog(x1, y1[:-1], label="music")
+        plt.loglog(x2, y2[:-1], label="rest")
+        plt.legend()
+        plt.title("IAI distributions "+ subject+"  size = "+str(min_siz))
+        plt.show()
+        plt.close()"""
+        
+        mean_iai_speech.append(np.mean(mins_avalanches_speech['IAI']))
+        mean_iai_music.append(np.mean(mins_avalanches_music['IAI']))
+        mean_iai_rest.append(np.mean(mins_avalanches_rest['IAI']))
+        
+    y0, x0,_= plt.hist(speech_IAI,100, label="speech")
+    y2, x2,_=plt.hist(music_IAI, 100, label="music")
+    y1, x1,_=plt.hist(rest_IAI, 100, label="rest")
+    plt.title("IAI distributions "+ subject)
+    plt.show()
+    plt.close()
     
+    x0_log=np.log(x0)
+    y0_log=np.log(y0)
+    
+    x1_log=np.log(x1)
+    y1_log=np.log(y1)
+    
+    x2_log=np.log(x2)
+    y2_log=np.log(y2)
+    
+    plt.plot(x0_log[:int(len(x0_log)/3)], y0_log[:int(len(x0_log)/3)], label="speech")
+    plt.plot(x1_log[:int(len(x1_log)/3)], y1_log[:int(len(x1_log)/3)], label="music")
+    plt.plot(x2_log[:int(len(x2_log)/3)], y2_log[:int(len(x2_log)/3)], label="rest")
+    plt.legend()
+    plt.title("IAI distributions "+ subject)
+    plt.show()
+    plt.close()
+        
+    parameter_rest.append(np.polyfit(x0_log[:int(len(x0_log)/3)], y0_log[:int(len(x0_log)/3)], 1)[0])
+    parameter_music.append(np.polyfit(x1_log[:int(len(x1_log)/3)], y1_log[:int(len(x1_log)/3)], 1)[0])
+    parameter_speech.append(np.polyfit(x2_log[:int(len(x2_log)/3)], y2_log[:int(len(x2_log)/3)], 1)[0])
+    
+    plt.loglog(x0[:-1], y0, label="speech")
+    plt.loglog(x1[:-1], y1, label="music")
+    plt.loglog(x2[:-1], y2, label="rest")
+    plt.legend()
+    plt.title("IAI distributions "+ subject)
+    plt.show()
+    plt.close()
+    
+plt.plot(parameter_speech, label='speech')
+plt.plot(parameter_music, label='music')
+plt.plot(parameter_rest, label='rest')
+plt.legend()
+plt.title('parameter')
+plt.show()
+plt.close()    
+
+"""
     plt.plot(min_sizes, mean_iai_speech, label='speech')
     plt.plot(min_sizes, mean_iai_music, label='music')
     plt.plot(min_sizes, mean_iai_rest, label='rest')
@@ -352,7 +446,7 @@ plt.title('IAI')
 plt.show()
 plt.close()   
 
-"""
+
 plt.figure(figsize=(28,200))
 for i, sub in enumerate(subject_list):
     for j, sound in enumerate(sound_list):
@@ -369,7 +463,7 @@ for i, sub in enumerate(subject_list):
         
         plt.colorbar()
 plt.show()
-plt.close()"""
+plt.close()
 
 b=0.25
 corr_matrix_speech=np.corrcoef(np.array(rss_speech))
@@ -451,7 +545,7 @@ plt.close()
 list_mean_corr_music=[]
 list_mean_corr_speech=[]
 list_mean_corr_rest=[]
-"""
+
 num_sim=1000
 for i in range(num_sim):
     
@@ -462,7 +556,7 @@ for i in range(num_sim):
     list_mean_corr_speech.append(np.mean(np.corrcoef(rss_array_speech_shift)[np.triu_indices(19, k = 1)]))
     
     rss_array_rest_shift=fc.shifting_matrix(np.array(rss_rest))
-    list_mean_corr_rest.append(np.mean(np.corrcoef(rss_array_rest_shift)[np.triu_indices(19, k = 1)]))"""
+    list_mean_corr_rest.append(np.mean(np.corrcoef(rss_array_rest_shift)[np.triu_indices(19, k = 1)]))
     
 plt.hist(list_mean_corr_music, label='random shift')
 plt.axvline(x=np.mean(np.corrcoef(np.array(rss_music))[np.triu_indices(19, k = 1)]), label='our result')
@@ -490,6 +584,7 @@ plt.close()
     #plt.show()
     #plt.close()
     
+    """
     
     
     
